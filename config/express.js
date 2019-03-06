@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
-const allowCrossOriginRequests = function(req, res, next) {
+const allowCrossOriginRequests = function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Headers",
@@ -11,7 +11,7 @@ const allowCrossOriginRequests = function(req, res, next) {
   next();
 };
 
-module.exports = function() {
+module.exports = function () {
   const app = express();
   app.rootUrl = "/api/v1";
 
@@ -25,7 +25,7 @@ module.exports = function() {
   require("../app/routes/users.routes")(app);
 
   // DEBUG (you can remove this)
-  app.get("/", function(req, res) {
+  app.get("/", function (req, res) {
     res.send({ message: "Hello World!" });
   });
 
