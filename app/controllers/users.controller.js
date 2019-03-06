@@ -1,5 +1,9 @@
 const User = require("../models/users.model");
 
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
 exports.create = (req, res) => {
   const { username, email, givenName, familyName, password } = req.body;
   const user = [
@@ -11,7 +15,10 @@ exports.create = (req, res) => {
   ];
   let values = [user];
 
-  User.create(values, result => {
-    res.json(result);
+  User.create(values, (status, description, result) => {
+    res.status(status).send(description);
+    if (result) {
+      res.json(result);
+    }
   });
 };
