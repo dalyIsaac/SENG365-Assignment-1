@@ -8,16 +8,15 @@ const jwt = require("jsonwebtoken")
 exports.create = (req, res) => {
   const { username, email, givenName, familyName, password } = req.body;
   try {
-    const user = [
-      username.toString(),
-      email.toString(),
-      givenName.toString(),
-      familyName.toString(),
-    ];
+    const user = {
+      username: username.toString(),
+      email: email.toString(),
+      givenName: givenName.toString(),
+      familyName: familyName.toString(),
+      password: password.toString()
+    };
 
-    const values = [user, [password.toString()]];
-
-    User.create(values, (status, result) => {
+    User.create(user, (status, result) => {
       if (result) {
         jwt.sign(
           {

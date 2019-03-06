@@ -2,20 +2,28 @@ const db = require("../../config/db");
 
 /**
  * Registers a new user with the database.
- * @param {string[][]} newUser The new user to insert.
+ * @param {{
+ *  username: string; 
+ *  email: string; 
+ *  givenName: string; 
+ *  familyName: string, 
+ *  password: string
+ * }} newUser The new user to insert.
  * @param {(status: number, result?: { userId: string }) => void} done Handles completed API query
  */
 exports.create = (newUser, done) => {
+  const { username, email, givenName, familyName, password } = newUser;
+  const values = [[username, email, givenName, familyName], [password]];
   db.getPool().query(
     `INSERT INTO User (username, email, given_name, family_name, password) VALUES (?, SHA2(?, 512))`,
-    newUser,
+    values,
     err => {
       if (err) {
         return done(400);
       }
       db.getPool().query(
         "SELECT user_id FROM User WHERE username = ?",
-        newUser[0],
+        username,
         (err, rows) => {
           if (err) {
             return done(400);
