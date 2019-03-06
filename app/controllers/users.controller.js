@@ -1,4 +1,5 @@
 const User = require("../models/users.model");
+const jwt = require("jsonwebtoken")
 
 /**
  * @param {import("express").Request} req
@@ -6,19 +7,39 @@ const User = require("../models/users.model");
  */
 exports.create = (req, res) => {
   const { username, email, givenName, familyName, password } = req.body;
-  const user = [
-    username.toString(),
-    email.toString(),
-    givenName.toString(),
-    familyName.toString(),
-    password.toString()
-  ];
-  let values = [user];
+  try {
+    const user = [
+      username.toString(),
+      email.toString(),
+      givenName.toString(),
+      familyName.toString(),
+    ];
 
-  User.create(values, (status, description, result) => {
-    res.status(status).send(description);
-    if (result) {
-      res.json(result);
-    }
-  });
+    const values = [user, [password.toString()]];
+
+    User.create(values, (status, result) => {
+      if (result) {
+        jwt.sign(
+          {
+            username,
+            password
+          },
+          "secretkey",
+          (err, token) => {
+            res.status(status).json({
+              ...result,
+              token
+            })
+          }
+        );
+        res.status(status).json(result);
+      } else {
+        res.send(status);
+      }
+      return;
+    });
+  } catch (error) {
+    res.send(400);
+    return;
+  }
 };
