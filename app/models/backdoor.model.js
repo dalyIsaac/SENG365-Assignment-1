@@ -1,5 +1,6 @@
 const db = require('../../config/db');
 const fs = require('mz/fs');
+const passwords = require("./passwords.model");
 
 const photoDirectory = './storage/photos/';
 
@@ -43,7 +44,7 @@ async function populateDefaultUsers() {
 
     // Shallow copy all the user arrays within the main data array
     // Ensures that the user arrays with hashed passwords won't persist across multiple calls to this function
-    usersData = usersData.map(user => ([ ...user ]));
+    usersData = usersData.map(user => ([...user]));
 
     const passwordIndex = properties.indexOf('password');
     await Promise.all(usersData.map(user => changePasswordToHash(user, passwordIndex)));
@@ -58,8 +59,7 @@ async function populateDefaultUsers() {
 
 async function changePasswordToHash(user, passwordIndex) {
     // TODO you need to implement "passwords.hash()" yourself, then uncomment the line below.
-    // user[passwordIndex] = await passwords.hash(user[passwordIndex]);
-
+    user[passwordIndex] = await passwords.hash(user[passwordIndex]);
     // It is recommended you use a reputable cryptology library to do the actual hashing/comparing for you...
 }
 

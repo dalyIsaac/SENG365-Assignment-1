@@ -1,4 +1,5 @@
 const db = require("../../config/db");
+const passwords = require("./passwords.model");
 
 /**
  * Registers a new user with the database.
@@ -13,9 +14,9 @@ const db = require("../../config/db");
  */
 exports.create = (newUser, done) => {
   const { username, email, givenName, familyName, password } = newUser;
-  const values = [[username, email, givenName, familyName], [password]];
+  const values = [[username, email, givenName, familyName, passwords.hash(password)]];
   db.getPool().query(
-    `INSERT INTO User (username, email, given_name, family_name, password) VALUES (?, SHA2(?, 512))`,
+    `INSERT INTO User (username, email, given_name, family_name, password) VALUES (?)`,
     values,
     err => {
       if (err) {
