@@ -89,3 +89,27 @@ exports.login = (user, done) => {
     }
   );
 };
+
+/**
+ * Attempts to login a user aginst the database.
+ * @param {string} token Identifies the user to remove.
+ * @param {(status: number ) => void} done Handles completed API query
+ */
+exports.logout = (token, done) => {
+  db.getPool().query(
+    `SELECT user_id FROM User WHERE auth_token = "${token}"`,
+    [],
+    (err, rows) => {
+      if (err || rows.length === 0) {
+        return done(401);
+      }
+      db.getPool().query(
+        `UPDATE User SET auth_token = null WHERE auth_token = "${token}"`,
+        [],
+        () => {
+          done(200);
+        }
+      );
+    }
+  );
+};

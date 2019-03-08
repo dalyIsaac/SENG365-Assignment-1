@@ -57,3 +57,19 @@ exports.login = (req, res) => {
     }
   });
 };
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.logout = (req, res) => {
+  const { "x-authorization": token } = req.headers;
+
+  if (token) {
+    User.logout(token, status => {
+      res.send(status);
+    });
+  } else {
+    res.send(401);
+  }
+};
