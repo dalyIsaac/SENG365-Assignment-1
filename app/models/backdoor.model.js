@@ -1,6 +1,6 @@
 const db = require("../../config/db");
 const fs = require("mz/fs");
-const passwords = require("./passwords.model");
+const auth = require("./auth.model");
 
 const photoDirectory = "./storage/photos/";
 
@@ -64,7 +64,7 @@ async function populateDefaultUsers() {
 }
 
 async function changePasswordToHash(user, passwordIndex) {
-  user[passwordIndex] = await passwords.hash(user[passwordIndex]);
+  user[passwordIndex] = await auth.hash(user[passwordIndex]);
   // It is recommended you use a reputable cryptology library to do the actual hashing/comparing for you...
 }
 
