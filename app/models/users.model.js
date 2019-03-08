@@ -1,5 +1,5 @@
 const db = require("../../config/db");
-const passwords = require("./passwords.model");
+const auth = require("./auth.model");
 
 /**
  * Registers a new user with the database.
@@ -15,7 +15,7 @@ const passwords = require("./passwords.model");
 exports.create = (newUser, done) => {
   const { username, email, givenName, familyName, password } = newUser;
   const values = [
-    [username, email, givenName, familyName, passwords.hash(password)]
+    [username, email, givenName, familyName, auth.hash(password)]
   ];
   db.getPool().query(
     `INSERT INTO User (username, email, given_name, family_name, password) VALUES (?)`,
@@ -40,6 +40,26 @@ exports.create = (newUser, done) => {
 };
 
 /**
+ * Saves a token in the database.
+ * @param {string} userId The id of the user, to whom the token belongs.
+ * @param {string} token The token to save.
+ * @param {(status: number, result?: { userId: string }) => void} done Handles completed API query
+ */
+function saveToken(userId, token, done) {
+  db.getPool().query(
+    `UPDATE User SET auth_token = "${token}" WHERE user_id = "${userId}"`,
+    [],
+    err => {
+      if (err) {
+        done(400);
+      } else {
+        done(200, { userId, token });
+      }
+    }
+  );
+}
+
+/**
  * Attempts to login a user aginst the database.
  * @param {{
  *  attr: "username" | "email",
@@ -59,9 +79,10 @@ exports.login = (user, done) => {
       }
       const hash = rows[0]["password"];
       const userId = rows[0]["user_id"];
-      const authResult = passwords.test(password, hash);
+      const authResult = auth.test(password, hash);
       if (authResult) {
-        return done(200, { userId });
+        const token = auth.createToken();
+        return saveToken(userId, token, done);
       } else {
         return done(400);
       }

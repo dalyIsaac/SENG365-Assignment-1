@@ -1,5 +1,4 @@
 const User = require("../models/users.model");
-const jwt = require("jsonwebtoken");
 
 /**
  * @param {import("express").Request} req
@@ -52,10 +51,7 @@ exports.login = (req, res) => {
 
   User.login(user, (status, result) => {
     if (result) {
-      const { userId } = result;
-      jwt.sign({ userId }, "secretkey", (err, token) => {
-        res.status(status).send({ userId, token });
-      });
+      res.status(status).send(result);
     } else {
       res.send(status);
     }
