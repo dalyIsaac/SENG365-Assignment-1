@@ -48,7 +48,6 @@ exports.create = (newUser, done) => {
 function saveToken(userId, token, done) {
   db.getPool().query(
     `UPDATE User SET auth_token = "${token}" WHERE user_id = "${userId}"`,
-    [],
     err => {
       if (err) {
         done(400);
@@ -72,7 +71,6 @@ exports.login = (user, done) => {
   const { attr, attrValue, password } = user;
   db.getPool().query(
     `SELECT user_id, password FROM User WHERE ${attr} = "${attrValue}"`,
-    [],
     (err, rows) => {
       if (err || rows.length === 0) {
         return done(400);
@@ -95,21 +93,16 @@ exports.login = (user, done) => {
  * @param {string} token Identifies the user to remove.
  * @param {(status: number ) => void} done Handles completed API query
  */
-exports.logout = (token, done) => {
-  db.getPool().query(
-    `SELECT user_id FROM User WHERE auth_token = "${token}"`,
-    [],
-    (err, rows) => {
-      if (err || rows.length === 0) {
-        return done(401);
+exports.logout = async (token, done) => {
+  const result = await auth.authorize(token);
+  if (result) {
+    db.getPool().query(
+      `UPDATE User SET auth_token = null WHERE auth_token = "${token}"`,
+      () => {
+        done(200);
       }
-      db.getPool().query(
-        `UPDATE User SET auth_token = null WHERE auth_token = "${token}"`,
-        [],
-        () => {
-          done(200);
-        }
-      );
-    }
-  );
+    );
+  } else {
+    done(401);
+  }
 };

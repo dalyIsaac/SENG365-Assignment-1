@@ -1,4 +1,5 @@
 {
     "editor.formatOnSave": true,
-    "comments.openPanel": "neverOpen"
+    "comments.openPanel": "neverOpen",
+    "eslint.enable": true
 }
