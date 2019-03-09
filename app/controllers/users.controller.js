@@ -1,4 +1,5 @@
 const User = require("../models/users.model");
+const emailValidator = require("email-validator");
 
 /**
  * @param {import("express").Request} req
@@ -14,6 +15,12 @@ exports.create = (req, res) => {
       familyName: familyName.toString(),
       password: password.toString()
     };
+
+    if (!password) {
+      throw new Error("Password should not be empty.");
+    } else if (!emailValidator.validate(user.email)) {
+      throw new Error("Invalid email address");
+    }
 
     User.create(user, (status, result) => {
       if (result) {
