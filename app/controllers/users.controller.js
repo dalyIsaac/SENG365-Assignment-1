@@ -1,5 +1,6 @@
 const User = require("../models/users.model");
 const emailValidator = require("email-validator");
+const { isType } = require("./typeChecks");
 
 /**
  * @param {import("express").Request} req
@@ -9,16 +10,19 @@ exports.create = (req, res) => {
   const { username, email, givenName, familyName, password } = req.body;
   try {
     const user = {
-      username: username.toString(),
-      email: email.toString(),
-      givenName: givenName.toString(),
-      familyName: familyName.toString(),
-      password: password.toString()
+      username,
+      email,
+      givenName,
+      familyName,
+      password
     };
+    Object.keys(user).forEach(key => {
+      if (!isType(user[key], "string")) {
+        throw new Error("Expected a string");
+      }
+    });
 
-    if (!password) {
-      throw new Error("Password should not be empty.");
-    } else if (!emailValidator.validate(user.email)) {
+    if (!emailValidator.validate(user.email)) {
       throw new Error("Invalid email address");
     }
 
