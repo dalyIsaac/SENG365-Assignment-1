@@ -1,6 +1,7 @@
 const User = require("../models/users.model");
 const emailValidator = require("email-validator");
-const { isType } = require("./typeChecks");
+const { isStringAndNotEmpty } = require("./typeChecks");
+const { isInteger } = require("lodash/lang");
 
 /**
  * @param {import("express").Request} req
@@ -17,7 +18,7 @@ exports.create = (req, res) => {
       password
     };
     Object.keys(user).forEach(key => {
-      if (!isType(user[key], "string")) {
+      if (!isStringAndNotEmpty(user[key])) {
         throw new Error("Expected a string");
       }
     });
@@ -64,7 +65,7 @@ exports.login = (req, res) => {
   for (const key in user) {
     if (user.hasOwnProperty(key)) {
       const element = user[key];
-      if (!isType(element, "string")) {
+      if (!isStringAndNotEmpty(element)) {
         return res.send(400);
       }
     }
@@ -106,7 +107,7 @@ exports.getUser = (req, res) => {
   const { "x-authorization": token } = req.headers;
   const userId = Number(id);
 
-  if (userId === NaN) {
+  if (!isInteger(userId)) {
     res.send(404);
     return;
   }
@@ -130,11 +131,11 @@ exports.updateUser = (req, res) => {
   const { "x-authorization": token } = req.headers;
   const userId = Number(id);
 
-  if (userId === NaN) {
+  if (!isInteger(userId)) {
     res.send(404);
     return;
   }
-  if (!token) {
+  if (!isStringAndNotEmpty(token)) {
     res.send(401);
     return;
   }
@@ -144,21 +145,21 @@ exports.updateUser = (req, res) => {
   let props = {};
   try {
     if (familyName !== undefined) {
-      if (isType(familyName, "string")) {
+      if (isStringAndNotEmpty(familyName)) {
         props.familyName = familyName;
       } else {
         throw new Error("Incorrect type for family name");
       }
     }
     if (givenName !== undefined) {
-      if (isType(givenName, "string")) {
+      if (isStringAndNotEmpty(givenName)) {
         props.givenName = givenName;
       } else {
         throw new Error("Incorrect type for given name");
       }
     }
     if (password !== undefined) {
-      if (isType(password, "string")) {
+      if (isStringAndNotEmpty(password)) {
         props.password = password;
       } else {
         throw new Error("Incorrect type for password");
