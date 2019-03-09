@@ -9,6 +9,7 @@
     "ecmaFeatures": {}
   },
   "rules": {
-    "no-console": "warn"
+    "no-console": "warn",
+    "eqeqeq": "error"
   }
 }

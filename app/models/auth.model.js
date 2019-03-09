@@ -29,7 +29,7 @@ exports.createToken = () => crypto.randomBytes(32).toString("base64");
 /**
  * Attempts to verify that the given token resides within the database.
  * @param {string} token The token to verify.
- * @returns {string | null} Returns the `user_id` of the user, if it exists.
+ * @returns {Promise<number | null>} Returns the `user_id` of the user, if it exists.
  * Otherwise, it returns null.
  */
 exports.authorize = async token => {
@@ -38,7 +38,7 @@ exports.authorize = async token => {
       .getPool()
       .query(`SELECT user_id FROM User WHERE auth_token = "${token}"`);
     if (rows.length > 0) {
-      return rows[0]["user_id"];
+      return Number(rows[0]["user_id"]);
     }
     return null;
   } catch (error) {

@@ -1,5 +1,6 @@
 {
     "editor.formatOnSave": true,
     "comments.openPanel": "neverOpen",
-    "eslint.enable": true
+    "eslint.enable": true,
+    "javascript.implicitProjectConfig.checkJs": true
 }

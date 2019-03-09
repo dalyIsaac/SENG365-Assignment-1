@@ -43,7 +43,7 @@ exports.create = (newUser, done) => {
  * Saves a token in the database.
  * @param {string} userId The id of the user, to whom the token belongs.
  * @param {string} token The token to save.
- * @param {(status: number, result?: { userId: string }) => void} done Handles completed API query
+ * @param {(status: number, result?: { userId: string; token: string }) => void} done Handles completed API query
  */
 function saveToken(userId, token, done) {
   db.getPool().query(
@@ -95,7 +95,7 @@ exports.login = (user, done) => {
  */
 exports.logout = async (token, done) => {
   const authorized = await auth.authorize(token);
-  if (authorized) {
+  if (authorized !== null) {
     db.getPool().query(
       `UPDATE User SET auth_token = null WHERE auth_token = "${token}"`,
       () => {
@@ -109,7 +109,7 @@ exports.logout = async (token, done) => {
 
 /**
  * Retrieves theinformation about a user.
- * @param {number} The `id` of the user.
+ * @param {number} id The `id` of the user.
  * @param {string} token Identifies the user to remove.
  * @param {(status: number, result?:
  *  {
@@ -121,7 +121,12 @@ exports.logout = async (token, done) => {
  * } done Handles completed API query
  */
 exports.getUser = async (id, token, done) => {
-  const userId = await auth.authorize(token);
+  let userId;
+  if (token === "") {
+    userId = null;
+  } else {
+    userId = await auth.authorize(token);
+  }
   if (userId === id) {
     db.getPool().query(
       `SELECT username, email, given_name, family_name FROM User WHERE user_id = ${id}`,
@@ -153,5 +158,42 @@ exports.getUser = async (id, token, done) => {
         return done(200, { username, givenName, familyName });
       }
     );
+  }
+};
+
+/**
+ *
+ * @param {number} id The id of the user.
+ * @param {{ familyName?: string; givenName?: string; password?: string; }} newProps The new properties for the user.
+ * @param {string} token The token to authenticate with.
+ * @param {(status: number) => void} done Handles completed API query.
+ */
+exports.updateUser = async (id, newProps, token, done) => {
+  const userId = await auth.authorize(token);
+  if (userId !== null) {
+    if (userId !== id) {
+      // valid user data, authenticated as the wrong user
+      return done(403);
+    }
+
+    let queryParts = ["UPDATE User SET"];
+    const { familyName, givenName, password } = newProps;
+    if (familyName) {
+      queryParts.push(`familyName = "${familyName}",`);
+    }
+    if (givenName) {
+      queryParts.push(`givenName = "${givenName}",`);
+    }
+    if (password) {
+      queryParts.push(`password = "${password}",`);
+    }
+    queryParts.push(`WHERE user_id = ${userId}`);
+
+    db.getPool().query(queryParts.join(" "), () => {
+      return done(200);
+    });
+  } else {
+    // not authenticated
+    return done(401);
   }
 };
