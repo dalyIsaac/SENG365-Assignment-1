@@ -26,16 +26,22 @@ exports.test = (password, hash) => {
  */
 exports.createToken = () => crypto.randomBytes(32).toString("base64");
 
+/**
+ * Attempts to verify that the given token resides within the database.
+ * @param {string} token The token to verify.
+ * @returns {string | null} Returns the `user_id` of the user, if it exists.
+ * Otherwise, it returns null.
+ */
 exports.authorize = async token => {
   try {
-    const result = await db
+    const rows = await db
       .getPool()
       .query(`SELECT user_id FROM User WHERE auth_token = "${token}"`);
-    if (result.length > 0) {
-      return true;
+    if (rows.length > 0) {
+      return rows[0]["user_id"];
     }
-    return false;
+    return null;
   } catch (error) {
-    return false;
+    return null;
   }
 };

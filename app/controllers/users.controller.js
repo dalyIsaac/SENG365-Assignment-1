@@ -80,3 +80,20 @@ exports.logout = (req, res) => {
     res.send(401);
   }
 };
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.getUser = (req, res) => {
+  const { id } = req.params;
+  const { "x-authorization": token } = req.headers;
+
+  try {
+    User.getUser(Number(id), token, (status, result) => {
+      res.status(status).send(result);
+    });
+  } catch (error) {
+    res.send(404);
+  }
+};

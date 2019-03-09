@@ -91,11 +91,11 @@ exports.login = (user, done) => {
 /**
  * Attempts to login a user aginst the database.
  * @param {string} token Identifies the user to remove.
- * @param {(status: number ) => void} done Handles completed API query
+ * @param {(status: number) => void} done Handles completed API query
  */
 exports.logout = async (token, done) => {
-  const result = await auth.authorize(token);
-  if (result) {
+  const authorized = await auth.authorize(token);
+  if (authorized) {
     db.getPool().query(
       `UPDATE User SET auth_token = null WHERE auth_token = "${token}"`,
       () => {
@@ -104,5 +104,54 @@ exports.logout = async (token, done) => {
     );
   } else {
     done(401);
+  }
+};
+
+/**
+ * Retrieves theinformation about a user.
+ * @param {number} The `id` of the user.
+ * @param {string} token Identifies the user to remove.
+ * @param {(status: number, result?:
+ *  {
+ *   username: string;
+ *   email?: string;
+ *   givenName: string;
+ *   familyName: string;
+ *  }) => void
+ * } done Handles completed API query
+ */
+exports.getUser = async (id, token, done) => {
+  const userId = await auth.authorize(token);
+  if (userId === id) {
+    db.getPool().query(
+      `SELECT username, email, given_name, family_name FROM User WHERE user_id = ${id}`,
+      (err, rows) => {
+        if (err) {
+          return done(404);
+        }
+        const {
+          username,
+          email,
+          ["given_name"]: givenName,
+          ["family_name"]: familyName
+        } = rows[0];
+        return done(200, { username, email, givenName, familyName });
+      }
+    );
+  } else {
+    db.getPool().query(
+      `SELECT username, given_name, family_name FROM User WHERE user_id = ${id}`,
+      (err, rows) => {
+        if (err || rows.length === 0) {
+          return done(404);
+        }
+        const {
+          username,
+          ["given_name"]: givenName,
+          ["family_name"]: familyName
+        } = rows[0];
+        return done(200, { username, givenName, familyName });
+      }
+    );
   }
 };
