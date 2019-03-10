@@ -23,6 +23,7 @@ module.exports = function() {
   // ROUTES
   require("../app/routes/backdoor.routes")(app);
   require("../app/routes/users.routes")(app);
+  require("../app/routes/venues.routes")(app);
 
   // DEBUG (you can remove this)
   app.get("/", function(req, res) {

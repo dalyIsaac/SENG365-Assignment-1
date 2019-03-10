@@ -1,6 +1,6 @@
 const User = require("../models/users.model");
 const emailValidator = require("email-validator");
-const { isStringAndNotEmpty } = require("./typeChecks");
+const { isStringAndNotEmpty } = require("../customTyping");
 const { isInteger } = require("lodash/lang");
 
 /**

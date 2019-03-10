@@ -10,7 +10,7 @@ const auth = require("./auth.model");
  *  familyName: string,
  *  password: string
  * }} newUser The new user to insert.
- * @param {(status: number, result?: { userId: string }) => void} done Handles completed API query
+ * @param {(status: number, result?: { userId: string }) => void} done Handles completed API query.
  */
 exports.create = (newUser, done) => {
   const { username, email, givenName, familyName, password } = newUser;
