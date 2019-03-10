@@ -89,8 +89,6 @@ exports.get = (req, res) => {
       }
     };
     const params = constructObject(inputs, schema);
-    console.log("\n\n\n");
-    console.log(params);
 
     if (params.sortBy === "DISTANCE") {
       if (!(isFinite(params.myLatitude) && isFinite(params.myLongitude))) {

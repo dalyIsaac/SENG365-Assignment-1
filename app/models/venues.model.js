@@ -134,12 +134,10 @@ exports.getVenues = (params, done) => {
   const execQuery = "EXECUTE STMT USING @myLimit;DEALLOCATE PREPARE STMT;";
   const query = limitQuery + prepQuery + execQuery;
 
-  console.warn(query);
   db.getPool().query(query, (err, rows) => {
     if (err) {
       return done(400);
     }
-    console.log(rows[2]);
     return done(200, rows[2]);
   });
 };
