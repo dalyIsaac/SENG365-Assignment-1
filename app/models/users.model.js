@@ -25,14 +25,13 @@ exports.create = (newUser, done) => {
         return done(400);
       }
       db.getPool().query(
-        "SELECT user_id FROM User WHERE username = ?",
+        "SELECT user_id AS userId FROM User WHERE username = ?",
         username,
         (err, rows) => {
           if (err) {
             return done(400);
           }
-          const userId = rows[0]["user_id"];
-          done(201, { userId });
+          done(201, { userId: rows[0].userId });
         }
       );
     }
@@ -70,13 +69,12 @@ function saveToken(userId, token, done) {
 exports.login = (user, done) => {
   const { attr, attrValue, password } = user;
   db.getPool().query(
-    `SELECT user_id, password FROM User WHERE ${attr} = "${attrValue}"`,
+    `SELECT user_id AS userId, password AS hash FROM User WHERE ${attr} = "${attrValue}"`,
     (err, rows) => {
       if (err || rows.length === 0) {
         return done(400);
       }
-      const hash = rows[0]["password"];
-      const userId = rows[0]["user_id"];
+      const { hash, userId } = rows[0];
       const authResult = auth.test(password, hash);
       if (authResult) {
         const token = auth.createToken();
@@ -129,33 +127,22 @@ exports.getUser = async (id, token, done) => {
   }
   if (userId === id) {
     db.getPool().query(
-      `SELECT username, email, given_name, family_name FROM User WHERE user_id = ${id}`,
+      `SELECT username, email, given_name AS givenName, family_name as familyName FROM User WHERE user_id = ${id}`,
       (err, rows) => {
         if (err) {
           return done(404);
         }
-        const {
-          username,
-          email,
-          ["given_name"]: givenName,
-          ["family_name"]: familyName
-        } = rows[0];
-        return done(200, { username, email, givenName, familyName });
+        return done(200, rows[0]);
       }
     );
   } else {
     db.getPool().query(
-      `SELECT username, given_name, family_name FROM User WHERE user_id = ${id}`,
+      `SELECT username, given_name as givenName, family_name as familyName FROM User WHERE user_id = ${id}`,
       (err, rows) => {
         if (err || rows.length === 0) {
           return done(404);
         }
-        const {
-          username,
-          ["given_name"]: givenName,
-          ["family_name"]: familyName
-        } = rows[0];
-        return done(200, { username, givenName, familyName });
+        return done(200, rows[0]);
       }
     );
   }
@@ -179,10 +166,10 @@ exports.updateUser = async (id, newProps, token, done) => {
     let queryParts = ["UPDATE User SET"];
     const { familyName, givenName, password } = newProps;
     if (familyName) {
-      queryParts.push(`familyName = "${familyName}",`);
+      queryParts.push(`family_name = "${familyName}",`);
     }
     if (givenName) {
-      queryParts.push(`givenName = "${givenName}",`);
+      queryParts.push(`given_name = "${givenName}",`);
     }
     if (password) {
       queryParts.push(`password = "${password}",`);

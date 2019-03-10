@@ -1,5 +1,5 @@
 const { isFinite } = require("lodash/lang");
-const { constructObject, isDefined } = require("../customTyping");
+const { constructObject } = require("../customTyping");
 const Venues = require("../models/venues.model");
 
 /**
