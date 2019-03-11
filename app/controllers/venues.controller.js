@@ -207,3 +207,71 @@ exports.create = (req, res) => {
     return res.send(400);
   }
 };
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.patch = (req, res) => {
+  const { "x-authorization": token } = req.headers;
+  const { id } = req.params;
+  if (isUndefined(token) || isUndefined(id)) {
+    return res.send(401);
+  }
+
+  /**
+   * @type {{
+   * [key: string]: {
+   *   valueType: "string" | "integer" | "number" | "boolean";
+   *   defaultValue?: number | boolean | string;
+   *   canBeEmpty?: boolean;
+   *   minimum?: number;
+   *   maximum?: number;
+   *   canBeUndefined?: boolean;
+   *   legitValues?: Set<string>;
+   * }}}
+   */
+  const schema = {
+    venueName: {
+      valueType: "string",
+      canBeEmpty: false,
+      canBeUndefined: true
+    },
+    categoryId: { valueType: "integer", canBeUndefined: true },
+    city: { valueType: "string", canBeEmpty: false, canBeUndefined: true },
+    shortDescription: {
+      valueType: "string",
+      canBeEmpty: true,
+      canBeUndefined: true
+    },
+    longDescription: {
+      valueType: "string",
+      canBeEmpty: true,
+      canBeUndefined: true
+    },
+    address: { valueType: "string", canBeEmpty: false, canBeUndefined: true },
+    latitude: {
+      valueType: "number",
+      canBeUndefined: true,
+      minimum: -90,
+      maximum: 90
+    },
+    longitude: {
+      valueType: "number",
+      canBeEmpty: false,
+      canBeUndefined: true,
+      minimum: -180,
+      maximum: 180
+    }
+  };
+
+  try {
+    const props = constructObject(req.body, schema);
+    // @ts-ignore
+    Venues.patch(token, id, props, status => {
+      return res.sendStatus(status);
+    });
+  } catch (error) {
+    return res.send(400);
+  }
+};

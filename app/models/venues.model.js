@@ -1,6 +1,8 @@
 const db = require("../../config/db");
 const { isDefined } = require("../customTyping");
 const auth = require("./auth.model");
+const { isNumber, isString } = require("lodash/lang");
+const { snakeCase } = require("change-case");
 
 /**
  * @param {{
@@ -283,6 +285,64 @@ exports.create = async (token, props, done) => {
         return done(201, { venueId: rows[1][0]["LAST_INSERT_ID()"] });
       }
     });
+  } else {
+    return done(401);
+  }
+};
+
+/**
+ * @param {{
+ *   venueName?: string;
+ *   categoryId?: number;
+ *   city?: string;
+ *   shortDescription?: string;
+ *   longDescription?: string;
+ *   address?: string;
+ *   latitude?: number;
+ *   longitude?: number;
+ * }} props The given properties to insert.
+ * @param {(status: number) => void} done Handles the completed API query.
+ */
+exports.patch = async (token, id, props, done) => {
+  const userId = await auth.authorize(token);
+  if (userId !== null) {
+    let adminId;
+    try {
+      const rows = await db
+        .getPool()
+        .query(`SELECT admin_id AS adminId FROM Venue WHERE venue_id = ${id}`);
+      ({ adminId } = rows[0]);
+      if (adminId !== userId) {
+        throw new Error("Invalid administrator.");
+      }
+    } catch (error) {
+      return done(403);
+    }
+
+    try {
+      const items = [];
+      Object.keys(props).forEach(key => {
+        const val = props[key];
+        if (isDefined(val) && props.hasOwnProperty(key)) {
+          const output_key = snakeCase(key);
+          if (isString(val)) {
+            items.push(`${output_key} = "${val}"`);
+          } else if (isNumber(val)) {
+            items.push(`${output_key} = ${val}`);
+          }
+        }
+      });
+      if (items.length === 0) {
+        throw new Error("No changes were given");
+      }
+
+      await db
+        .getPool()
+        .query(`UPDATE Venue SET ${items.join(", ")} WHERE venue_id = ${id}`);
+      return done(200);
+    } catch (error) {
+      return done(400);
+    }
   } else {
     return done(401);
   }
