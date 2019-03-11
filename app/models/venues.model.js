@@ -1,5 +1,6 @@
 const db = require("../../config/db");
 const { isDefined } = require("../customTyping");
+const auth = require("./auth.model");
 
 /**
  * @param {{
@@ -92,24 +93,23 @@ exports.getVenues = (params, done) => {
     groupBy = "GROUP BY Venue.venue_id ";
   }
 
-  let orderBy = "";
-  if (isDefined(params.sortBy)) {
-    orderBy = "ORDER BY ";
-    switch (params.sortBy) {
-      case "STAR_RATING":
-        orderBy += "meanStarRating ";
-        break;
-      case "COST_RATING":
-        orderBy += "mode_cost_rating ";
-        break;
-      case "DISTANCE":
-        orderBy += "distance ";
-        break;
-      default:
-        break;
-    }
+  let orderBy = "ORDER BY ";
+  switch (params.sortBy) {
+    case "STAR_RATING":
+      orderBy += "meanStarRating ";
+      break;
+    case "COST_RATING":
+      orderBy += "mode_cost_rating ";
+      break;
+    case "DISTANCE":
+      orderBy += "distance ";
+      break;
+    default:
+      break;
   }
-  if (orderBy !== "" && isDefined(params.reverseSort)) {
+  if (params.reverseSort) {
+    orderBy += "ASC ";
+  } else {
     orderBy += "DESC ";
   }
 
@@ -226,4 +226,65 @@ exports.getVenue = (id, done) => {
       return done(200, output);
     });
   });
+};
+
+/**
+ * @param {{
+ *   venueName: string;
+ *   categoryId: number;
+ *   city: string;
+ *   shortDescription: string;
+ *   longDescription: string;
+ *   address: string;
+ *   latitude: number;
+ *   longitude: number;
+ *   adminId?: number;
+ * }} props The given properties to insert.
+ * @param {(status: number, result?: { venueId: number }) => void} done Handles the completed API query.
+ */
+exports.create = async (token, props, done) => {
+  const userId = await auth.authorize(token);
+  if (userId !== null) {
+    props.adminId = userId;
+    const {
+      venueName,
+      categoryId,
+      city,
+      shortDescription,
+      longDescription,
+      address,
+      latitude,
+      longitude,
+      adminId
+    } = props;
+    const query =
+      `INSERT INTO Venue (` +
+      `admin_id, venue_name, category_id, city, short_description, long_description, ` +
+      `address, latitude, longitude, date_added` +
+      `) VALUES (?);` +
+      `SELECT LAST_INSERT_ID();`;
+    const values = [
+      [
+        adminId,
+        venueName,
+        categoryId,
+        city,
+        shortDescription,
+        longDescription,
+        address,
+        latitude,
+        longitude,
+        new Date()
+      ]
+    ];
+    db.getPool().query(query, values, (err, rows) => {
+      if (err) {
+        return done(400);
+      } else {
+        return done(201, { venueId: rows[1][0]["LAST_INSERT_ID()"] });
+      }
+    });
+  } else {
+    return done(401);
+  }
 };

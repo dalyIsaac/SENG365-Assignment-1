@@ -140,7 +140,6 @@ function constructString(
  */
 exports.constructObject = (inputs, schema) => {
   const output = {};
-
   for (const key in schema) {
     if (schema.hasOwnProperty(key)) {
       const {
