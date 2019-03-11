@@ -275,3 +275,17 @@ exports.patch = (req, res) => {
     return res.send(400);
   }
 };
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.getCategories = (req, res) => {
+  Venues.getCategories((status, result) => {
+    if (result) {
+      return res.status(200).send(result);
+    } else {
+      return res.sendStatus(status);
+    }
+  });
+};

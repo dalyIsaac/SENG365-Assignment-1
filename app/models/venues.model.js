@@ -347,3 +347,21 @@ exports.patch = async (token, id, props, done) => {
     return done(401);
   }
 };
+
+/**
+ * @param {(status: number, results?: []) => void} done Handles the completed API query.
+ */
+exports.getCategories = done => {
+  db.getPool().query(
+    "SELECT category_id AS categoryId, " +
+      "category_name as categoryName, category_description AS categoryDescription " +
+      "FROM VenueCategory",
+    (err, rows) => {
+      if (err) {
+        return done(400);
+      } else {
+        return done(200, rows);
+      }
+    }
+  );
+};
