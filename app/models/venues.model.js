@@ -113,11 +113,11 @@ exports.getVenues = (params, done) => {
     orderBy += "DESC ";
   }
 
-  const offset = `OFFSET ${params.startIndex} `;
-
   let limitQuery = isDefined(params.count)
     ? `SET @myLimit = ${params.count};`
     : `SELECT COUNT(venue_id) INTO @myLimit FROM Venue;`;
+  const offset = `OFFSET ${params.startIndex} `;
+
   const queryStr =
     "SELECT " +
     select.join(", ") +
@@ -133,11 +133,97 @@ exports.getVenues = (params, done) => {
   const prepQuery = `PREPARE STMT FROM "${queryStr}";`;
   const execQuery = "EXECUTE STMT USING @myLimit;DEALLOCATE PREPARE STMT;";
   const query = limitQuery + prepQuery + execQuery;
-
   db.getPool().query(query, (err, rows) => {
     if (err) {
       return done(400);
     }
     return done(200, rows[2]);
+  });
+};
+
+/**
+ * @params {number} id The id of the venue to retrieve.
+ * @params {(status: number, result?: object) => void} done Handle the completed API request.
+ */
+exports.getVenue = (id, done) => {
+  const select = [
+    "venue_name AS venueName",
+    "admin_id",
+    "username",
+    "Venue.category_id AS categoryId",
+    "category_name AS categoryName",
+    "category_description AS categoryDescription",
+    "city",
+    "short_description AS shortDescription",
+    "long_description AS longDescription",
+    "date_added AS dateAdded",
+    "address",
+    "latitude",
+    "longitude"
+  ];
+
+  const query =
+    "SELECT " +
+    select.join(", ") +
+    " FROM Venue " +
+    "LEFT JOIN User ON Venue.admin_id = User.user_id " +
+    "LEFT JOIN VenueCategory ON VenueCategory.category_id = Venue.category_id " +
+    `WHERE user_id = ${id} `;
+
+  db.getPool().query(query, (err, venues) => {
+    if (err || venues.length === 0) {
+      return done(404);
+    }
+    const photosSelect = [
+      "photo_filename AS photoFilename",
+      "photo_description AS photoDescription",
+      "is_primary AS isPrimary"
+    ];
+    const photosQuery =
+      "SELECT " + photosSelect.join(", ") + " FROM VenuePhoto";
+    db.getPool().query(photosQuery, (err, photos) => {
+      if (err) {
+        return done(404);
+      }
+      const {
+        venueName,
+        admin_id,
+        username,
+        categoryId,
+        categoryName,
+        categoryDescription,
+        city,
+        shortDescription,
+        longDescription,
+        dateAdded,
+        address,
+        latitude,
+        longitude
+      } = venues[0];
+      const output = {
+        venueName,
+        admin: {
+          userId: admin_id,
+          username
+        },
+        category: {
+          categoryId,
+          categoryName,
+          categoryDescription
+        },
+        city,
+        shortDescription,
+        longDescription,
+        dateAdded,
+        address,
+        latitude,
+        longitude,
+        photos: []
+      };
+      photos.forEach(props => {
+        output.photos.push({ ...props });
+      });
+      return done(200, output);
+    });
   });
 };

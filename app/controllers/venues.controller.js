@@ -1,4 +1,4 @@
-const { isFinite } = require("lodash/lang");
+const { isFinite, isUndefined } = require("lodash/lang");
 const { constructObject } = require("../customTyping");
 const Venues = require("../models/venues.model");
 
@@ -116,4 +116,24 @@ exports.get = (req, res) => {
   } catch (error) {
     return res.send(400);
   }
+};
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.getSingle = (req, res) => {
+  const { id } = req.params;
+
+  if (isUndefined(id)) {
+    res.send(404);
+  }
+
+  Venues.getVenue(id, (status, result) => {
+    if (result) {
+      res.status(status).json(result);
+    } else {
+      res.sendStatus(status);
+    }
+  });
 };
