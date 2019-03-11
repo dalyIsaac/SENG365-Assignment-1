@@ -42,7 +42,7 @@ exports.getVenues = (params, done) => {
     "latitude",
     "longitude",
     "mode_cost_rating AS modeCostRating",
-    "photo_filename AS photoFilename",
+    "(SELECT photo_filename FROM VenuePhoto WHERE Venue.venue_id = VenuePhoto.venue_id) AS primaryPhoto",
     "AVG(star_rating) AS meanStarRating"
   ];
 
@@ -77,7 +77,6 @@ exports.getVenues = (params, done) => {
 
   const join =
     "LEFT JOIN Review ON Review.reviewed_venue_id = Venue.venue_id " +
-    "LEFT JOIN VenuePhoto ON VenuePhoto.venue_id = Venue.venue_id " +
     "LEFT JOIN ModeCostRating ON Venue.venue_id = ModeCostRating.venue_id ";
 
   let having = "";
