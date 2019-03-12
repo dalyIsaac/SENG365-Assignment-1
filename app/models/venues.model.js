@@ -244,7 +244,7 @@ exports.getVenue = (id, done) => {
  * @param {(status: number, result?: { venueId: number }) => void} done Handles the completed API query.
  */
 exports.create = async (token, props, done) => {
-  const userId = await auth.authorize(token);
+  const userId = await Auth.authorize(token);
   if (userId !== null) {
     props.adminId = userId;
     const {
@@ -304,7 +304,7 @@ exports.create = async (token, props, done) => {
  * @param {(status: number) => void} done Handles the completed API query.
  */
 exports.patch = async (token, id, props, done) => {
-  const userId = await auth.authorize(token);
+  const userId = await Auth.authorize(token);
   if (userId !== null) {
     let adminId;
     try {

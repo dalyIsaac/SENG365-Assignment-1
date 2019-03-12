@@ -15,7 +15,7 @@ const Auth = require("../auth.model");
 exports.create = (newUser, done) => {
   const { username, email, givenName, familyName, password } = newUser;
   const values = [
-    [username, email, givenName, familyName, auth.hash(password)]
+    [username, email, givenName, familyName, Auth.hash(password)]
   ];
   db.getPool().query(
     `INSERT INTO User (username, email, given_name, family_name, password) VALUES (?)`,
@@ -75,9 +75,9 @@ exports.login = (user, done) => {
         return done(400);
       }
       const { hash, userId } = rows[0];
-      const authResult = auth.test(password, hash);
+      const authResult = Auth.test(password, hash);
       if (authResult) {
-        const token = auth.createToken();
+        const token = Auth.createToken();
         return saveToken(userId, token, done);
       } else {
         return done(400);
@@ -92,7 +92,7 @@ exports.login = (user, done) => {
  * @param {(status: number) => void} done Handles completed API query
  */
 exports.logout = async (token, done) => {
-  const authorized = await auth.authorize(token);
+  const authorized = await Auth.authorize(token);
   if (authorized !== null) {
     db.getPool().query(
       `UPDATE User SET auth_token = null WHERE auth_token = "${token}"`,
@@ -123,7 +123,7 @@ exports.getUser = async (id, token, done) => {
   if (token === "") {
     userId = null;
   } else {
-    userId = await auth.authorize(token);
+    userId = await Auth.authorize(token);
   }
   if (userId === id) {
     db.getPool().query(
@@ -156,7 +156,7 @@ exports.getUser = async (id, token, done) => {
  * @param {(status: number) => void} done Handles completed API query.
  */
 exports.updateUser = async (id, newProps, token, done) => {
-  const userId = await auth.authorize(token);
+  const userId = await Auth.authorize(token);
   if (userId !== null) {
     if (userId !== id) {
       // valid user data, authenticated as the wrong user
