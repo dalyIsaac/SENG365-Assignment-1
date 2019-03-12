@@ -24,7 +24,11 @@ exports.test = (password, hash) => {
 /**
  * Creates a token for a user.
  */
-exports.createToken = () => crypto.randomBytes(32).toString("base64");
+exports.createToken = () =>
+  crypto
+    .randomBytes(32)
+    .toString("base64")
+    .slice(0, 32);
 
 /**
  * Attempts to verify that the given token resides within the database.
