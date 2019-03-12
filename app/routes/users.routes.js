@@ -9,4 +9,5 @@ module.exports = app => {
   app.route("/api/v1/users/:id").patch(users.updateUser);
   app.route("/api/v1/users/:id/photo").put(photos.upload);
   app.route("/api/v1/users/:id/photo").get(photos.getPhoto);
+  app.route("/api/v1/users/:id/photo").delete(photos.deletePhoto);
 };

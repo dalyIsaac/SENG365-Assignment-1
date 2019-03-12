@@ -77,3 +77,45 @@ exports.getPhoto = (id, done) => {
     }
   );
 };
+
+/**
+ * @param {string} token The token to authenticate the user.
+ * @param {number} id The id of the user whose photo will be deleted.
+ * @param {(status: number) => void} done Handles the completed API query.
+ */
+exports.deletePhoto = async (token, id, done) => {
+  const userId = await Auth.authorize(token);
+  if (userId !== null) {
+    if (userId !== id) {
+      return done(403);
+    }
+
+    try {
+      const rows = await db
+        .getPool()
+        .query(
+          `SELECT profile_photo_filename AS filename FROM User WHERE user_id = ${id};` +
+            `UPDATE User SET profile_photo_filename = null WHERE user_id = ${id}`
+        );
+      if (rows.length === 0 || rows[0].length === 0) {
+        return done(400);
+      }
+
+      const { filename } = rows[0][0];
+      if (isUndefined(filename)) {
+        return done(400);
+      }
+
+      if (fs.existsSync(filename)) {
+        fs.unlinkSync(filename);
+        return done(200);
+      } else {
+        return done(404);
+      }
+    } catch (error) {
+      return done(400);
+    }
+  } else {
+    return done(401);
+  }
+};

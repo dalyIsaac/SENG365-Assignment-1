@@ -45,7 +45,8 @@ exports.getPhoto = (req, res) => {
     Photos.getPhoto(Number(id), (status, filename) => {
       if (filename) {
         if (fs.existsSync(filename)) {
-          const absolutePath = path.resolve(__dirname, "../../../") + "/" + filename;
+          const absolutePath =
+            path.resolve(__dirname, "../../../") + "/" + filename;
           return res.sendFile(absolutePath);
         }
       }
@@ -54,4 +55,24 @@ exports.getPhoto = (req, res) => {
   } else {
     return res.sendStatus(404);
   }
+};
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.deletePhoto = (req, res) => {
+  const { id } = req.params;
+  const { "x-authorization": token } = req.headers;
+
+  if (isUndefined(id) || id === "") {
+    return res.send(404);
+  } else if (isUndefined(token)) {
+    return res.send(403);
+  }
+
+  // @ts-ignore
+  Photos.deletePhoto(token, Number(id), status => {
+    return res.send(status);
+  });
 };
