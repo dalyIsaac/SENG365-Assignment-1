@@ -2,6 +2,7 @@ const { isDefined } = require("../../customTyping");
 const { isUndefined } = require("lodash/lang");
 const Photos = require("../../models/users/photos.model");
 const fs = require("fs");
+const path = require("path");
 
 /**
  * @param {import("express").Request} req
@@ -44,7 +45,8 @@ exports.getPhoto = (req, res) => {
     Photos.getPhoto(Number(id), (status, filename) => {
       if (filename) {
         if (fs.existsSync(filename)) {
-          return res.sendFile(filename);
+          const absolutePath = path.resolve(__dirname, "../../../") + "/" + filename;
+          return res.sendFile(absolutePath);
         }
       }
       return res.sendStatus(status);
