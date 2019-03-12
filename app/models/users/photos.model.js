@@ -30,11 +30,14 @@ exports.putPhoto = async (token, id, buf, format, done) => {
     if (!fs.existsSync("media")) {
       fs.mkdirSync("media");
     }
-    if (!fs.existsSync(`media/${id}`)) {
-      fs.mkdirSync(`media/${id}`);
+    if (!fs.existsSync("media/users")) {
+      fs.mkdirSync("media/users");
+    }
+    if (!fs.existsSync(`media/users/${id}`)) {
+      fs.mkdirSync(`media/users/${id}`);
     }
 
-    const filename = `media/${id}/profile_photo.${format}`;
+    const filename = `media/users/${id}/profile_photo.${format}`;
     fs.writeFileSync(filename, buf);
     db.getPool().query(
       `SELECT profile_photo_filename AS previousFilename FROM User WHERE user_id = ${id};` +
