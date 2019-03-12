@@ -64,7 +64,7 @@ async function populateDefaultUsers() {
 }
 
 async function changePasswordToHash(user, passwordIndex) {
-  user[passwordIndex] = await auth.hash(user[passwordIndex]);
+  user[passwordIndex] = await Auth.hash(user[passwordIndex]);
   // It is recommended you use a reputable cryptology library to do the actual hashing/comparing for you...
 }
 

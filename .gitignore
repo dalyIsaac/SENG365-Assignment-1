@@ -25,3 +25,5 @@ typings/
 *.tgz
 .yarn-integrity
 .env
+
+media/
