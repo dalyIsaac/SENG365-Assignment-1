@@ -1,6 +1,6 @@
 const db = require("../../config/db");
 const fs = require("mz/fs");
-const auth = require("./auth.model");
+const Auth = require("./auth.model");
 
 const photoDirectory = "./storage/photos/";
 

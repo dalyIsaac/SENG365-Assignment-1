@@ -1,5 +1,5 @@
-const db = require("../../config/db");
-const auth = require("./auth.model");
+const db = require("../../../config/db");
+const Auth = require("../auth.model");
 
 /**
  * Registers a new user with the database.

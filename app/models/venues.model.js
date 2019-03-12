@@ -1,6 +1,6 @@
 const db = require("../../config/db");
 const { isDefined } = require("../customTyping");
-const auth = require("./auth.model");
+const Auth = require("./auth.model");
 const { isNumber, isString } = require("lodash/lang");
 const { snakeCase } = require("change-case");
 
