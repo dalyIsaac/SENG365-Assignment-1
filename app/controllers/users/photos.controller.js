@@ -1,6 +1,7 @@
 const { isDefined } = require("../../customTyping");
 const { isUndefined } = require("lodash/lang");
 const Photos = require("../../models/users/photos.model");
+const fs = require("fs");
 
 /**
  * @param {import("express").Request} req
@@ -29,5 +30,26 @@ exports.upload = (req, res) => {
     });
   } else {
     return res.sendStatus(400);
+  }
+};
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.getPhoto = (req, res) => {
+  const { id } = req.params;
+
+  if (isDefined(id) && id !== "") {
+    Photos.getPhoto(Number(id), (status, filename) => {
+      if (filename) {
+        if (fs.existsSync(filename)) {
+          return res.sendFile(filename);
+        }
+      }
+      return res.sendStatus(status);
+    });
+  } else {
+    return res.sendStatus(404);
   }
 };
