@@ -38,7 +38,7 @@ exports.putPhoto = async (token, id, buf, format, done) => {
     fs.writeFileSync(filename, buf);
     db.getPool().query(
       `SELECT profile_photo_filename AS previousFilename FROM User WHERE user_id = ${id};` +
-        `UPDATE User SET profile_photo_filename = "${filename}" WHERE user_id = ${id}"`,
+        `UPDATE User SET profile_photo_filename = "${filename}" WHERE user_id = ${id}`,
       (err, rows) => {
         if (err) {
           return done(400);
