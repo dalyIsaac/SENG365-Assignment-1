@@ -14,17 +14,12 @@ exports.putPhoto = async (token, id, buf, format, done) => {
   const userId = await Auth.authorize(token);
   if (userId !== null) {
     if (userId !== id) {
-      db.getPool().query(
-        `SELECT * FROM User WHERE user_id = ${id}`,
-        (err, rows) => {
-          if (err || rows.length === 0) {
-            return done(404);
-          } else {
-            return done(403);
-          }
-        }
-      );
-      return;
+      const userExists = await Auth.userExists(id);
+      if (userExists) {
+        return done(403);
+      } else {
+        return done(404);
+      }
     }
 
     if (!fs.existsSync("media")) {
@@ -75,6 +70,9 @@ exports.getPhoto = (id, done) => {
         return done(404);
       } else {
         const { filename } = rows[0];
+        if (filename === null) {
+          return done(404);
+        }
         return done(200, filename);
       }
     }
@@ -90,7 +88,12 @@ exports.deletePhoto = async (token, id, done) => {
   const userId = await Auth.authorize(token);
   if (userId !== null) {
     if (userId !== id) {
-      return done(403);
+      const userExists = await Auth.userExists(id);
+      if (userExists) {
+        return done(403);
+      } else {
+        return done(404);
+      }
     }
 
     try {

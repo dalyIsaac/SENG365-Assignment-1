@@ -68,7 +68,7 @@ exports.deletePhoto = (req, res) => {
   if (isUndefined(id) || id === "") {
     return res.send(404);
   } else if (isUndefined(token)) {
-    return res.send(403);
+    return res.send(401);
   }
 
   // @ts-ignore

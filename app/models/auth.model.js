@@ -49,3 +49,21 @@ exports.authorize = async token => {
     return null;
   }
 };
+
+/**
+ * Checks if the given user exists inside the database.
+ * @param {number} id
+ */
+exports.userExists = async id => {
+  try {
+    const rows = await db
+      .getPool()
+      .query(`SELECT * FROM User WHERE user_id = ${id}`);
+    if (rows.length === 0) {
+      return false;
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
