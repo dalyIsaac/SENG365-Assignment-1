@@ -1,6 +1,6 @@
 const { isFinite, isUndefined } = require("lodash/lang");
-const { constructObject } = require("../customTyping");
-const Venues = require("../models/venues.model");
+const { constructObject } = require("../../customTyping");
+const Venues = require("../../models/venues/venues.model");
 
 /**
  * @param {import("express").Request} req
