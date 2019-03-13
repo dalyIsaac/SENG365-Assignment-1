@@ -2,6 +2,7 @@ const fs = require("fs");
 const db = require("../../../config/db");
 const Auth = require("../auth.model");
 const { isUndefined, isNull } = require("lodash/lang");
+const { createNestedDir } = require("../common");
 
 /**
  * @param {string} token The token given by the user.
@@ -22,17 +23,10 @@ exports.putPhoto = async (token, id, buf, format, done) => {
       }
     }
 
-    if (!fs.existsSync("media")) {
-      fs.mkdirSync("media");
-    }
-    if (!fs.existsSync("media/users")) {
-      fs.mkdirSync("media/users");
-    }
-    if (!fs.existsSync(`media/users/${id}`)) {
-      fs.mkdirSync(`media/users/${id}`);
-    }
+    const targetDir = `media/users/${id}/`;
+    createNestedDir(targetDir);
 
-    const filename = `media/users/${id}/profile_photo.${format}`;
+    const filename = targetDir + `profile_photo.${format}`;
     fs.writeFileSync(filename, buf);
     db.getPool().query(
       `SELECT profile_photo_filename AS previousFilename FROM User WHERE user_id = ${id};` +
