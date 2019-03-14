@@ -6,7 +6,7 @@ const saltRounds = 10;
 
 /**
  * Returns a hash of the given password.
- * @params {string} password The password to hash.
+ * @param {string} password The password to hash.
  */
 exports.hash = password => {
   return bcrypt.hashSync(password, saltRounds);
@@ -14,8 +14,8 @@ exports.hash = password => {
 
 /**
  * Tests a password against the correct, hashed, password.'
- * @params {string} password The password to check.
- * @params {string} hash The hash of the stored password.
+ * @param {string} password The password to check.
+ * @param {string} hash The hash of the stored password.
  */
 exports.test = (password, hash) => {
   return bcrypt.compareSync(password, hash);
@@ -33,7 +33,8 @@ exports.createToken = () =>
 /**
  * Attempts to verify that the given token resides within the database.
  * @param {string} token The token to verify.
- * @returns {Promise<number | null>} Returns the `user_id` of the user, if it exists.
+ * @returns {Promise<number | null>} Returns the `user_id` of the user, if it
+ * exists.
  * Otherwise, it returns null.
  */
 exports.authorize = async token => {

@@ -34,7 +34,6 @@ const { snakeCase } = require("change-case");
  * }>) => void} done Handles the completed API query.
  */
 exports.getVenues = (params, done) => {
-  // TODO: Should only include data if defined in the params
   const select = [
     "Venue.venue_id AS venueId",
     "venue_name AS venueName",
@@ -143,8 +142,8 @@ exports.getVenues = (params, done) => {
 };
 
 /**
- * @params {number} id The id of the venue to retrieve.
- * @params {(status: number, result?: object) => void} done Handle the completed API request.
+ * @param {number} id The id of the venue to retrieve.
+ * @param {(status: number, result?: object) => void} done Handle the completed API request.
  */
 exports.getVenue = (id, done) => {
   const select = [
@@ -230,6 +229,7 @@ exports.getVenue = (id, done) => {
 };
 
 /**
+ * @param {string} token
  * @param {{
  *   venueName: string;
  *   categoryId: number;
@@ -260,9 +260,8 @@ exports.create = async (token, props, done) => {
     } = props;
     const query =
       `INSERT INTO Venue (` +
-      `admin_id, venue_name, category_id, city, short_description, long_description, ` +
-      `address, latitude, longitude, date_added` +
-      `) VALUES (?);` +
+      `admin_id, venue_name, category_id, city, short_description, ` +
+      `long_description, address, latitude, longitude, date_added) VALUES (?);` +
       `SELECT LAST_INSERT_ID();`;
     const values = [
       [
@@ -291,6 +290,8 @@ exports.create = async (token, props, done) => {
 };
 
 /**
+ * @param {string} token
+ * @param {string} id
  * @param {{
  *   venueName?: string;
  *   categoryId?: number;

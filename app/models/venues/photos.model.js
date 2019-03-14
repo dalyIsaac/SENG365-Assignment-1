@@ -14,15 +14,20 @@ const addPhoto = (venueId, photoFilename, photoDescription, isPrimary) =>
   db
     .getPool()
     .query(
-      `INSERT INTO VenuePhoto (venue_id, photo_filename, photo_description, is_primary) ` +
-        `VALUES (?)`,
+      "INSERT INTO VenuePhoto (venue_id, photo_filename, photo_description, " +
+        "is_primary) VALUES (?)",
       [[venueId, photoFilename, photoDescription, isPrimary ? 1 : 0]]
     );
 
 /**
  * @param {string} token
  * @param {number} venueId
- * @param {{ path: string; filename: string; destination: string; mimetype: string; }} fileDescriptor
+ * @param {{
+ *   path: string;
+ *   filename: string;
+ *   destination: string;
+ *   mimetype: string;
+ * }} fileDescriptor
  * @param {string} description
  * @param {boolean} makePrimary
  * @param {(status: number) => void} done
@@ -44,7 +49,7 @@ exports.postPhoto = async (
     const adminRows = await db
       .getPool()
       .query(
-        `SELECT admin_id AS adminId FROM Venue ` +
+        "SELECT admin_id AS adminId FROM Venue " +
           `WHERE venue_id = ${venueId};`
       );
     if (adminRows.length > 0) {
@@ -66,8 +71,8 @@ exports.postPhoto = async (
     existingPrimaryRows = await db
       .getPool()
       .query(
-        `SELECT venue_id AS venueId, photo_filename AS photoFilename, ` +
-          `photo_description AS photoDescription ` +
+        "SELECT venue_id AS venueId, photo_filename AS photoFilename, " +
+          "photo_description AS photoDescription " +
           `FROM VenuePhoto WHERE venue_id = ${venueId} AND is_primary = 1;`
       );
   } catch (error) {
@@ -78,7 +83,7 @@ exports.postPhoto = async (
   const newPath = targetDir + fileDescriptor.filename;
   try {
     if (existingPrimaryRows.length === 0) {
-      // The venue doesn't have any photos, so this one should become the primary
+      // Venue doesn't have any photos, so this one should become the primary
       await addPhoto(venueId, newPath, description, true);
     } else {
       if (makePrimary) {
@@ -86,8 +91,8 @@ exports.postPhoto = async (
         await db
           .getPool()
           .query(
-            `UPDATE VenuePhoto SET is_primary = 0 WHERE venue_id = ${venueId} AND ` +
-              `is_primary = 1;`
+            `UPDATE VenuePhoto SET is_primary = 0 WHERE venue_id = ${venueId}` +
+              "AND is_primary = 1;"
           );
         await addPhoto(venueId, newPath, description, true);
       } else {
