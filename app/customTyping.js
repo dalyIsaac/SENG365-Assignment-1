@@ -1,81 +1,80 @@
 const { isString, isInteger, isFinite, isUndefined } = require("lodash/lang");
+const emailValidator = require("email-validator");
 
 /**
  * Constructs an integer given the string input, if it is an integer.
  * @param {string} value
  * @param {{
+ *   key?: string;
  *   defaultValue?: number;
- *   minimum?: number;
- *   maximum?: number;
- *   canBeUndefined?: boolean;
+ *   min?: number;
+ *   max?: number;
+ *   isRequired?: boolean;
  * }} options
  */
-function constructInteger(
-  value,
-  { defaultValue, minimum, maximum, canBeUndefined }
-) {
-  const intValue = Number(value);
+function constructInteger(value, { defaultValue, min, max, isRequired, key }) {
+  const intValue = parseInt(value);
   if (isInteger(intValue)) {
-    if (isInteger(minimum)) {
-      if (minimum > intValue) {
-        throw new Error("Value is too small.");
+    if (isInteger(min)) {
+      if (min > intValue) {
+        throw new Error(`Key: ${key}: Value is too small.`);
       }
     }
-    if (isInteger(maximum)) {
-      if (maximum < intValue) {
-        throw new Error("Value is too large.");
+    if (isInteger(max)) {
+      if (max < intValue) {
+        throw new Error(`Key: ${key}: Value is too large.`);
       }
     }
     return intValue;
   } else if (defaultValue !== undefined && isInteger(defaultValue)) {
     return defaultValue;
-  } else if (canBeUndefined === true) {
-    return null;
+  } else if (isRequired === false) {
+    return undefined;
   }
-  throw new Error("string given is not an integer.");
+  throw new Error(`Key: ${key}: string given is not an integer.`);
 }
+exports.constructInteger = constructInteger;
 
 /**
  * Constructs a boolean given the string input, if it is a boolean.
  * @param {string} value
  * @param {{
+ *   key?: string;
  *   defaultValue?: number;
- *   minimum?: number;
- *   maximum?: number;
- *   canBeUndefined?: boolean;
+ *   min?: number;
+ *   max?: number;
+ *   isRequired?: boolean;
  * }} options
  */
-function constructNumber(
-  value,
-  { defaultValue, minimum, maximum, canBeUndefined }
-) {
-  const newNumber = Number(value);
+function constructNumber(value, { key, defaultValue, min, max, isRequired }) {
+  const newNumber = parseFloat(value);
   if (isFinite(newNumber)) {
-    if (isFinite(minimum)) {
-      if (minimum > newNumber) {
-        throw new Error("Value is too small.");
+    if (isFinite(min)) {
+      if (min > newNumber) {
+        throw new Error(`Key: ${key}: Value is too small.`);
       }
     }
-    if (isFinite(maximum)) {
-      if (maximum < newNumber) {
-        throw new Error("Value is too large.");
+    if (isFinite(max)) {
+      if (max < newNumber) {
+        throw new Error(`Key: ${key}: Value is too large.`);
       }
     }
     return newNumber;
   } else if (defaultValue !== undefined && isFinite(defaultValue)) {
     return defaultValue;
-  } else if (canBeUndefined === true) {
-    return null;
+  } else if (isRequired === false) {
+    return undefined;
   }
-  throw new Error("string given is not a number");
+  throw new Error(`Key: ${key}: string given is not a number`);
 }
+exports.constructNumber = constructNumber;
 
 /**
  * Constructs a boolean given the string input, if it is a boolean.
  * @param {string} value
- * @param {{defaultValue:? boolean; canBeUndefined?: boolean}} options
+ * @param {{key?: string; defaultValue:? boolean; isRequired?: boolean}} options
  */
-function constructBoolean(value, { defaultValue, canBeUndefined }) {
+function constructBoolean(value, { key, defaultValue, isRequired }) {
   if (value === "false") {
     return false;
   } else if (value === "true") {
@@ -85,31 +84,38 @@ function constructBoolean(value, { defaultValue, canBeUndefined }) {
     (defaultValue === true || defaultValue === false)
   ) {
     return defaultValue;
-  } else if (canBeUndefined === true) {
-    return null;
+  } else if (isRequired === false) {
+    return undefined;
   }
-  throw new Error("string given is not a boolean.");
+  throw new Error(`Key: ${key}: string given is not a boolean.`);
 }
+exports.constructBoolean = constructBoolean;
 
 /**
  * Constructs a string given the string input, if it is a boolean.
  * @param {string} value
  * @param {{
+ *   key?: string;
  *   defaultValue?: number;
  *   canBeEmpty?: boolean
- *   canBeUndefined?: boolean;
+ *   isRequired?: boolean;
  *   legitValues?: Set<string>;
+ *   isEmail?: boolean;
  * }} options
  */
+
 function constructString(
   value,
-  { defaultValue, canBeEmpty, canBeUndefined, legitValues }
+  { key, defaultValue, canBeEmpty, isRequired, legitValues, isEmail }
 ) {
   if (isString(value)) {
     if (legitValues && !legitValues.has(value)) {
       throw new Error(
-        "The given string was not in the set of legitimate values."
+        `Key: ${key}: The given string was not in the set of legitimate values.`
       );
+    }
+    if (isEmail && !emailValidator.validate(value)) {
+      throw new Error(`Key: ${key}: The given string was not an email.`);
     }
     if (canBeEmpty === false && isStringAndNotEmpty(value)) {
       return value;
@@ -119,23 +125,26 @@ function constructString(
   }
   if (defaultValue !== undefined && isString(defaultValue)) {
     return defaultValue;
-  } else if (canBeUndefined === true) {
-    return null;
+  } else if (isUndefined(value) && isRequired === false) {
+    return undefined;
   }
-  throw new Error("The given string was invalid");
+  throw new Error(`Key: ${key}: The given string was invalid`);
 }
+exports.constructString = constructString;
 
 /**
- * @param {{[key: string]: string}} inputs The inputs from which to construct the object.
+ * @param {{[key: string]: string}} inputs The inputs from which to construct
+ * the object.
  * @param {{
  * [key: string]: {
  *   valueType: "string" | "integer" | "number" | "boolean";
  *   defaultValue?: number | boolean | string;
  *   canBeEmpty?: boolean;
- *   minimum?: number;
- *   maximum?: number;
- *   canBeUndefined?: boolean;
+ *   min?: number;
+ *   max?: number;
+ *   isRequired?: boolean;
  *   legitValues?: Set<string>
+ *   isEmail?: boolean;
  * }}} schema Describes the desired schema
  */
 exports.constructObject = (inputs, schema) => {
@@ -146,43 +155,48 @@ exports.constructObject = (inputs, schema) => {
         valueType,
         defaultValue,
         canBeEmpty,
-        minimum,
-        maximum,
-        canBeUndefined,
-        legitValues
+        min,
+        max,
+        isRequired,
+        legitValues,
+        isEmail
       } = schema[key];
       const value = inputs[key];
       let result;
       switch (valueType) {
         case "integer":
           result = constructInteger(value, {
+            key,
             // @ts-ignore
             defaultValue,
-            minimum,
-            maximum,
-            canBeUndefined
+            min,
+            max,
+            isRequired
           });
           break;
         case "number":
           result = constructNumber(value, {
+            key,
             // @ts-ignore
             defaultValue,
-            minimum,
-            maximum,
-            canBeUndefined
+            min,
+            max,
+            isRequired
           });
           break;
         case "boolean":
           // @ts-ignore
-          result = constructBoolean(value, { defaultValue, canBeUndefined });
+          result = constructBoolean(value, { key, defaultValue, isRequired });
           break;
         case "string":
           result = constructString(value, {
+            key,
             // @ts-ignore
             defaultValue,
             canBeEmpty,
-            canBeUndefined,
-            legitValues
+            isRequired,
+            legitValues,
+            isEmail
           });
           break;
         default:

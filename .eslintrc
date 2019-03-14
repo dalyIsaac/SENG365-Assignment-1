@@ -7,14 +7,13 @@
   "parserOptions": {
     "ecmaVersion": 2017,
     "sourceType": "module",
-    "ecmaFeatures": {
-      "experimentalObjectRestSpread": true
-    }
+    "ecmaFeatures": {}
   },
   "rules": {
     "no-console": "warn",
     "eqeqeq": "error",
     "quotes": [2, "double"],
-    "max-len": "error"
+    "max-len": "error",
+    "no-unused-vars": "error"
   }
 }

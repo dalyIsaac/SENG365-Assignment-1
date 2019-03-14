@@ -1,5 +1,4 @@
-const { isDefined } = require("../../customTyping");
-const { isUndefined } = require("lodash/lang");
+const { constructObject } = require("../../customTyping");
 const Photos = require("../../models/users/photos.model");
 const fs = require("fs");
 const path = require("path");
@@ -9,14 +8,40 @@ const path = require("path");
  * @param {import("express").Response} res
  */
 exports.upload = (req, res) => {
-  const { "x-authorization": token, "content-type": contentType } = req.headers;
-  const { id } = req.params;
-
-  if (isUndefined(token)) {
+  let token;
+  let id;
+  let contentType;
+  try {
+    // @ts-ignore
+    ({
+      "x-authorization": token,
+      "content-type": contentType
+      // @ts-ignore
+    } = constructObject(req.headers, {
+      "x-authorization": {
+        valueType: "string",
+        isRequired: true,
+        canBeEmpty: false
+      },
+      "content-type": {
+        valueType: "string",
+        isRequired: true,
+        canBeEmpty: false
+      }
+    }));
+  } catch (error) {
     return res.sendStatus(401);
   }
 
-  if (isDefined(contentType) && isDefined(id) && Buffer.isBuffer(req.body)) {
+  try {
+    ({ id } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true }
+    }));
+  } catch (error) {
+    return res.send(404);
+  }
+
+  if (Buffer.isBuffer(req.body)) {
     let format;
     if (contentType === "image/png") {
       format = "png";
@@ -26,7 +51,7 @@ exports.upload = (req, res) => {
       return res.send(400);
     }
     // @ts-ignore
-    Photos.putPhoto(token, Number(id), req.body, format, status => {
+    Photos.putPhoto(token, id, req.body, format, status => {
       return res.sendStatus(status);
     });
   } else {
@@ -39,22 +64,25 @@ exports.upload = (req, res) => {
  * @param {import("express").Response} res
  */
 exports.getPhoto = (req, res) => {
-  const { id } = req.params;
-
-  if (isDefined(id) && id !== "") {
-    Photos.getPhoto(Number(id), (status, filename) => {
-      if (filename) {
-        if (fs.existsSync(filename)) {
-          const absolutePath =
-            path.resolve(__dirname, "../../../") + "/" + filename;
-          return res.sendFile(absolutePath);
-        }
-      }
-      return res.sendStatus(status);
-    });
-  } else {
-    return res.sendStatus(404);
+  let id;
+  try {
+    ({ id } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true }
+    }));
+  } catch (error) {
+    return res.send(404);
   }
+
+  Photos.getPhoto(id, (status, filename) => {
+    if (filename) {
+      if (fs.existsSync(filename)) {
+        const absolutePath =
+          path.resolve(__dirname, "../../../") + "/" + filename;
+        return res.sendFile(absolutePath);
+      }
+    }
+    return res.sendStatus(status);
+  });
 };
 
 /**
@@ -62,17 +90,31 @@ exports.getPhoto = (req, res) => {
  * @param {import("express").Response} res
  */
 exports.deletePhoto = (req, res) => {
-  const { id } = req.params;
-  const { "x-authorization": token } = req.headers;
+  let token;
+  let id;
+  try {
+    // @ts-ignore
+    ({ "x-authorization": token } = constructObject(req.headers, {
+      "x-authorization": {
+        valueType: "string",
+        isRequired: true,
+        canBeEmpty: false
+      }
+    }));
+  } catch (error) {
+    return res.sendStatus(401);
+  }
 
-  if (isUndefined(id) || id === "") {
+  try {
+    ({ id } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true }
+    }));
+  } catch (error) {
     return res.send(404);
-  } else if (isUndefined(token)) {
-    return res.send(401);
   }
 
   // @ts-ignore
-  Photos.deletePhoto(token, Number(id), status => {
+  Photos.deletePhoto(token, id, status => {
     return res.send(status);
   });
 };

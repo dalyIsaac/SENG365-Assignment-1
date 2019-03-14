@@ -18,7 +18,8 @@ module.exports = function() {
   // MIDDLEWARE
   app.use(allowCrossOriginRequests);
   app.use(bodyParser.json());
-  app.use(bodyParser.raw({ type: "text/plain" })); // for the /executeSql endpoint
+  // for the /executeSql endpoint
+  app.use(bodyParser.raw({ type: "text/plain" }));
   app.use(bodyParser.raw({ type: "image/png" }));
   app.use(bodyParser.raw({ type: "image/jpeg" }));
   app.use(bodyParser.urlencoded({ extended: true }));

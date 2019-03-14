@@ -1,4 +1,3 @@
-const { isFinite, isUndefined } = require("lodash/lang");
 const { constructObject } = require("../../customTyping");
 const Venues = require("../../models/venues/venues.model");
 
@@ -7,68 +6,26 @@ const Venues = require("../../models/venues/venues.model");
  * @param {import("express").Response} res
  */
 exports.get = (req, res) => {
-  const {
-    startIndex,
-    count,
-    city,
-    q,
-    categoryId,
-    minStarRating,
-    maxCostRating,
-    adminId,
-    sortBy,
-    reverseSort,
-    myLatitude,
-    myLongitude
-  } = req.query;
-
   try {
-    const inputs = {
-      startIndex,
-      count,
-      city,
-      q,
-      categoryId,
-      minStarRating,
-      maxCostRating,
-      adminId,
-      sortBy,
-      reverseSort,
-      myLatitude,
-      myLongitude
-    };
-
-    /**
-     * @type {{
-     * [key: string]: {
-     *   valueType: "string" | "integer" | "number" | "boolean";
-     *   defaultValue?: number | boolean | string;
-     *   canBeEmpty?: boolean;
-     *   minimum?: number;
-     *   maximum?: number;
-     *   canBeUndefined?: boolean;
-     *   legitValues?: Set<string>;
-     * }}}
-     */
-    const schema = {
-      startIndex: { valueType: "integer", defaultValue: 0 },
-      count: { valueType: "integer", canBeUndefined: true },
-      city: { valueType: "string", canBeUndefined: true },
-      q: { valueType: "string", canBeUndefined: true },
-      categoryId: { valueType: "integer", canBeUndefined: true },
+    const params = constructObject(req.query, {
+      startIndex: { valueType: "integer", defaultValue: 0, min: 0 },
+      count: { valueType: "integer", isRequired: false, min: 1 },
+      city: { valueType: "string", isRequired: false },
+      q: { valueType: "string", isRequired: false },
+      categoryId: { valueType: "integer", isRequired: false, min: 0 },
       minStarRating: {
         valueType: "integer",
-        canBeUndefined: true,
-        minimum: 1,
-        maximum: 5
+        isRequired: false,
+        min: 1,
+        max: 5
       },
       maxCostRating: {
         valueType: "integer",
-        canBeUndefined: true,
-        minimum: 0,
-        maximum: 4
+        isRequired: false,
+        min: 0,
+        max: 4
       },
-      adminId: { valueType: "integer", canBeUndefined: true },
+      adminId: { valueType: "integer", isRequired: false, min: 0 },
       sortBy: {
         valueType: "string",
         defaultValue: "STAR_RATING",
@@ -77,23 +34,23 @@ exports.get = (req, res) => {
       reverseSort: { valueType: "boolean", defaultValue: false },
       myLatitude: {
         valueType: "number",
-        canBeUndefined: true,
-        minimum: -180,
-        maximum: 180
+        isRequired: false,
+        min: -180,
+        max: 180
       },
       myLongitude: {
         valueType: "number",
-        canBeUndefined: true,
-        minimum: -180,
-        maximum: 180
+        isRequired: false,
+        min: -180,
+        max: 180
       }
-    };
-    const params = constructObject(inputs, schema);
+    });
 
     if (params.sortBy === "DISTANCE") {
       if (!(isFinite(params.myLatitude) && isFinite(params.myLongitude))) {
         throw new Error(
-          "When sorting by DISTANCE, must provide both the longitude and latitude."
+          "When sorting by DISTANCE, must provide both the " +
+            "longitude and latitude."
         );
       }
     }
@@ -123,10 +80,13 @@ exports.get = (req, res) => {
  * @param {import("express").Response} res
  */
 exports.getSingle = (req, res) => {
-  const { id } = req.params;
-
-  if (isUndefined(id)) {
-    res.send(404);
+  let id;
+  try {
+    ({ id } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true }
+    }));
+  } catch (error) {
+    return res.send(404);
   }
 
   Venues.getVenue(id, (status, result) => {
@@ -143,69 +103,67 @@ exports.getSingle = (req, res) => {
  * @param {import("express").Response} res
  */
 exports.create = (req, res) => {
-  const { "x-authorization": token } = req.headers;
-  if (isUndefined(token)) {
+  let token;
+  try {
+    // @ts-ignore
+    ({ "x-authorization": token } = constructObject(req.headers, {
+      "x-authorization": {
+        valueType: "string",
+        canBeEmpty: false,
+        isRequired: true
+      }
+    }));
+  } catch (error) {
     return res.send(401);
   }
 
-  /**
-   * @type {{
-   * [key: string]: {
-   *   valueType: "string" | "integer" | "number" | "boolean";
-   *   defaultValue?: number | boolean | string;
-   *   canBeEmpty?: boolean;
-   *   minimum?: number;
-   *   maximum?: number;
-   *   canBeUndefined?: boolean;
-   *   legitValues?: Set<string>;
-   * }}}
-   */
-  const schema = {
-    venueName: {
-      valueType: "string",
-      canBeEmpty: false,
-      canBeUndefined: false
-    },
-    categoryId: { valueType: "integer", canBeUndefined: false },
-    city: { valueType: "string", canBeEmpty: false, canBeUndefined: false },
-    shortDescription: {
-      valueType: "string",
-      canBeEmpty: true,
-      canBeUndefined: false
-    },
-    longDescription: {
-      valueType: "string",
-      canBeEmpty: true,
-      canBeUndefined: false
-    },
-    address: { valueType: "string", canBeEmpty: false, canBeUndefined: false },
-    latitude: {
-      valueType: "number",
-      canBeUndefined: false,
-      minimum: -90,
-      maximum: 90
-    },
-    longitude: {
-      valueType: "number",
-      canBeEmpty: false,
-      canBeUndefined: false,
-      minimum: -180,
-      maximum: 180
-    }
-  };
+  let props;
   try {
-    const props = constructObject(req.body, schema);
-    // @ts-ignore
-    Venues.create(token, props, (status, result) => {
-      if (result) {
-        return res.status(status).send(result);
-      } else {
-        return res.sendStatus(status);
+    props = constructObject(req.body, {
+      venueName: {
+        valueType: "string",
+        canBeEmpty: false,
+        isRequired: true
+      },
+      categoryId: { valueType: "integer", isRequired: true },
+      city: { valueType: "string", canBeEmpty: false, isRequired: true },
+      shortDescription: {
+        valueType: "string",
+        canBeEmpty: true,
+        isRequired: true
+      },
+      longDescription: {
+        valueType: "string",
+        canBeEmpty: true,
+        isRequired: true
+      },
+      address: { valueType: "string", canBeEmpty: false, isRequired: true },
+      latitude: {
+        valueType: "number",
+        isRequired: true,
+        min: -90,
+        max: 90
+      },
+      longitude: {
+        valueType: "number",
+        canBeEmpty: false,
+        isRequired: true,
+        min: -180,
+        max: 180
       }
     });
   } catch (error) {
     return res.send(400);
   }
+
+  // @ts-ignore
+  Venues.create(token, props, (status, result) => {
+    if (result) {
+      return res.status(status).send(result);
+    } else {
+      return res.sendStatus(status);
+    }
+  });
 };
 
 /**
@@ -213,60 +171,58 @@ exports.create = (req, res) => {
  * @param {import("express").Response} res
  */
 exports.patch = (req, res) => {
-  const { "x-authorization": token } = req.headers;
-  const { id } = req.params;
-  if (isUndefined(token) || isUndefined(id)) {
+  let token;
+  let id;
+  try {
+    ({ id } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true }
+    }));
+    // @ts-ignore
+    ({ "x-authorization": token } = constructObject(req.headers, {
+      "x-authorization": {
+        valueType: "string",
+        canBeEmpty: false,
+        isRequired: true
+      }
+    }));
+  } catch (error) {
     return res.send(401);
   }
 
-  /**
-   * @type {{
-   * [key: string]: {
-   *   valueType: "string" | "integer" | "number" | "boolean";
-   *   defaultValue?: number | boolean | string;
-   *   canBeEmpty?: boolean;
-   *   minimum?: number;
-   *   maximum?: number;
-   *   canBeUndefined?: boolean;
-   *   legitValues?: Set<string>;
-   * }}}
-   */
-  const schema = {
-    venueName: {
-      valueType: "string",
-      canBeEmpty: false,
-      canBeUndefined: true
-    },
-    categoryId: { valueType: "integer", canBeUndefined: true },
-    city: { valueType: "string", canBeEmpty: false, canBeUndefined: true },
-    shortDescription: {
-      valueType: "string",
-      canBeEmpty: true,
-      canBeUndefined: true
-    },
-    longDescription: {
-      valueType: "string",
-      canBeEmpty: true,
-      canBeUndefined: true
-    },
-    address: { valueType: "string", canBeEmpty: false, canBeUndefined: true },
-    latitude: {
-      valueType: "number",
-      canBeUndefined: true,
-      minimum: -90,
-      maximum: 90
-    },
-    longitude: {
-      valueType: "number",
-      canBeEmpty: false,
-      canBeUndefined: true,
-      minimum: -180,
-      maximum: 180
-    }
-  };
-
   try {
-    const props = constructObject(req.body, schema);
+    const props = constructObject(req.body, {
+      venueName: {
+        valueType: "string",
+        canBeEmpty: false,
+        isRequired: false
+      },
+      categoryId: { valueType: "integer", isRequired: false },
+      city: { valueType: "string", canBeEmpty: false, isRequired: false },
+      shortDescription: {
+        valueType: "string",
+        canBeEmpty: true,
+        isRequired: false
+      },
+      longDescription: {
+        valueType: "string",
+        canBeEmpty: true,
+        isRequired: false
+      },
+      address: { valueType: "string", canBeEmpty: false, isRequired: false },
+      latitude: {
+        valueType: "number",
+        isRequired: false,
+        min: -90,
+        max: 90
+      },
+      longitude: {
+        valueType: "number",
+        canBeEmpty: false,
+        isRequired: false,
+        min: -180,
+        max: 180
+      }
+    });
     // @ts-ignore
     Venues.patch(token, id, props, status => {
       return res.sendStatus(status);

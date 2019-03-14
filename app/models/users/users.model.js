@@ -10,7 +10,8 @@ const Auth = require("../auth.model");
  *  familyName: string,
  *  password: string
  * }} newUser The new user to insert.
- * @param {(status: number, result?: { userId: string }) => void} done Handles completed API query.
+ * @param {(status: number,
+ * result?: { userId: string }) => void} done Handles completed API query.
  */
 exports.create = (newUser, done) => {
   const { username, email, givenName, familyName, password } = newUser;
@@ -18,22 +19,20 @@ exports.create = (newUser, done) => {
     [username, email, givenName, familyName, Auth.hash(password)]
   ];
   db.getPool().query(
-    `INSERT INTO User (username, email, given_name, family_name, password) VALUES (?)`,
+    "INSERT INTO User (username, email, given_name, family_name, password) " +
+      "VALUES (?);" +
+      `SELECT user_id AS userId FROM User WHERE username = "${username}";`,
     values,
-    err => {
+    (err, rows) => {
       if (err) {
         return done(400);
       }
-      db.getPool().query(
-        "SELECT user_id AS userId FROM User WHERE username = ?",
-        username,
-        (err, rows) => {
-          if (err) {
-            return done(400);
-          }
-          done(201, { userId: rows[0].userId });
-        }
-      );
+      try {
+        const userId = rows[1][0].userId;
+        done(201, { userId });
+      } catch (error) {
+        return done(400);
+      }
     }
   );
 };
@@ -42,7 +41,11 @@ exports.create = (newUser, done) => {
  * Saves a token in the database.
  * @param {string} userId The id of the user, to whom the token belongs.
  * @param {string} token The token to save.
- * @param {(status: number, result?: { userId: string; token: string }) => void} done Handles completed API query
+ * @param {(status: number,
+ *   result?: {
+ *     userId: string;
+ *     token: string }) => void} done
+ * Handles completed API query
  */
 function saveToken(userId, token, done) {
   db.getPool().query(
@@ -64,12 +67,14 @@ function saveToken(userId, token, done) {
  *  attrValue: string,
  *  password: string
  * }} user The user to authenticate.
- * @param {(status: number, result?: { userId: string }) => void} done Handles completed API query
+ * @param {(status: number,
+ *   result?: { userId: string }) => void} done Handles completed API query
  */
 exports.login = (user, done) => {
   const { attr, attrValue, password } = user;
   db.getPool().query(
-    `SELECT user_id AS userId, password AS hash FROM User WHERE ${attr} = "${attrValue}"`,
+    "SELECT user_id AS userId, password AS hash FROM User WHERE " +
+      `${attr} = "${attrValue}"`,
     (err, rows) => {
       if (err || rows.length === 0) {
         return done(400);
@@ -120,6 +125,7 @@ exports.logout = async (token, done) => {
  */
 exports.getUser = async (id, token, done) => {
   let userId;
+  // this case uniquely allows the retrieval of data when not authenticated.
   if (token === "") {
     userId = null;
   } else {
@@ -127,7 +133,8 @@ exports.getUser = async (id, token, done) => {
   }
   if (userId === id) {
     db.getPool().query(
-      `SELECT username, email, given_name AS givenName, family_name as familyName FROM User WHERE user_id = ${id}`,
+      "SELECT username, email, given_name AS givenName, " +
+        `family_name as familyName FROM User WHERE user_id = ${id}`,
       (err, rows) => {
         if (err) {
           return done(404);
@@ -137,7 +144,8 @@ exports.getUser = async (id, token, done) => {
     );
   } else {
     db.getPool().query(
-      `SELECT username, given_name as givenName, family_name as familyName FROM User WHERE user_id = ${id}`,
+      "SELECT username, given_name as givenName, family_name as familyName " +
+        `FROM User WHERE user_id = ${id}`,
       (err, rows) => {
         if (err || rows.length === 0) {
           return done(404);
@@ -151,7 +159,11 @@ exports.getUser = async (id, token, done) => {
 /**
  *
  * @param {number} id The id of the user.
- * @param {{ familyName?: string; givenName?: string; password?: string; }} newProps The new properties for the user.
+ * @param {{
+ *   familyName?: string;
+ *   givenName?: string;
+ *   password?: string;
+ * }} newProps The new properties for the user.
  * @param {string} token The token to authenticate with.
  * @param {(status: number) => void} done Handles completed API query.
  */
