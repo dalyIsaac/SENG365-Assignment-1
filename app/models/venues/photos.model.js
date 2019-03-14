@@ -80,11 +80,20 @@ exports.postPhoto = async (
   }
 
   const targetDir = `media/venues/${venueId}/`;
-  const newPath = targetDir + fileDescriptor.filename;
+  let newName = fileDescriptor.filename;
+  if (fileDescriptor.mimetype === "image/jpeg") {
+    newName += ".jpg";
+  } else if (fileDescriptor.mimetype === "image/png") {
+    newName += ".png";
+  } else {
+    return done(400);
+  }
+
+  const newPath = targetDir + newName;
   try {
     if (existingPrimaryRows.length === 0) {
       // Venue doesn't have any photos, so this one should become the primary
-      await addPhoto(venueId, newPath, description, true);
+      await addPhoto(venueId, newName, description, true);
     } else {
       if (makePrimary) {
         // Updates the old primary photo so that it isn't primary anymore
@@ -94,9 +103,9 @@ exports.postPhoto = async (
             `UPDATE VenuePhoto SET is_primary = 0 WHERE venue_id = ${venueId}` +
               "AND is_primary = 1;"
           );
-        await addPhoto(venueId, newPath, description, true);
+        await addPhoto(venueId, newName, description, true);
       } else {
-        await addPhoto(venueId, newPath, description, false);
+        await addPhoto(venueId, newName, description, false);
       }
     }
   } catch (error) {

@@ -9,12 +9,17 @@ module.exports = app => {
     .route(app.rootUrl + "/venues")
     .get(venues.get)
     .post(venues.create);
+
   app
     .route(app.rootUrl + "/venues/:id")
     .get(venues.getSingle)
     .patch(venues.patch);
+
   app.route(app.rootUrl + "/categories/").get(venues.getCategories);
+
   app
     .route(app.rootUrl + "/venues/:id/photos")
     .post(upload.fields([{ name: "photo", maxCount: 1 }]), photos.upload);
+
+  app.route(app.rootUrl + "/venues/:id/photos/:photoFilename").get(photos.get);
 };

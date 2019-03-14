@@ -1,5 +1,6 @@
 const Photos = require("../../models/venues/photos.model");
 const fs = require("fs");
+const path = require("path");
 const { constructObject } = require("../../customTyping");
 
 function deleteTempPhoto(photo) {
@@ -92,4 +93,34 @@ exports.upload = (req, res) => {
       return res.sendStatus(status);
     }
   );
+};
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.get = (req, res) => {
+  let id, photoFilename;
+  try {
+    ({ id, photoFilename } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true },
+      photoFilename: {
+        valueType: "string",
+        isRequired: true,
+        canBeEmpty: false
+      }
+    }));
+  } catch (error) {
+    return res.send(404);
+  }
+
+  const absolutePath =
+    path.resolve(__dirname, "../../../") +
+    `/media/venues/${id}/` +
+    photoFilename;
+  try {
+    return res.status(200).sendfile(absolutePath);
+  } catch (error) {
+    return res.sendStatus(404);
+  }
 };
