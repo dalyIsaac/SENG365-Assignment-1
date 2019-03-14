@@ -25,4 +25,8 @@ module.exports = app => {
     .route(app.rootUrl + "/venues/:id/photos/:photoFilename")
     .get(photos.get)
     .delete(photos.delete);
+
+  app
+    .route(app.rootUrl + "/venues/:id/photos/:photoFilename/setPrimary")
+    .post(photos.setPrimary);
 };

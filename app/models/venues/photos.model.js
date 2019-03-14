@@ -100,8 +100,8 @@ exports.postPhoto = async (
         await db
           .getPool()
           .query(
-            `UPDATE VenuePhoto SET is_primary = 0 WHERE venue_id = ${venueId}` +
-              "AND is_primary = 1;"
+            "UPDATE VenuePhoto SET is_primary = 0 WHERE " +
+              `venue_id = ${venueId} AND is_primary = 1;`
           );
         await addPhoto(venueId, newName, description, true);
       } else {
@@ -177,11 +177,61 @@ exports.delete = async (token, id, photoFilename, done) => {
               "LIMIT 1;"
           );
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error(error);
       }
       return done(200);
     }
   } else {
     return done(401);
+  }
+};
+
+/**
+ * @param {string} token
+ * @param {number} id
+ * @param {string} photoFilename
+ * @param {(status: number) => void} done
+ */
+exports.setPrimary = async (token, id, photoFilename, done) => {
+  const path = `media/venues/${id}/${photoFilename}`;
+  if (!fs.existsSync(path)) {
+    return done(404);
+  }
+
+  const userId = await Auth.authorize(token);
+  if (userId === null) {
+    return done(401);
+  }
+
+  // checks to see if the user is the admin for the venue
+  try {
+    const rows = await db
+      .getPool()
+      .query(
+        "SELECT admin_id AS adminId FROM VenuePhoto LEFT JOIN Venue ON " +
+          `Venue.venue_id = VenuePhoto.venue_id WHERE Venue.Venue_id = ${id} ` +
+          `AND photo_filename = "${photoFilename}";`
+      );
+    const { adminId } = rows[0];
+    if (adminId !== userId) {
+      return done(403);
+    }
+  } catch (error) {
+    return done(403);
+  }
+
+  // alters isPrimary
+  try {
+    await db
+      .getPool()
+      .query(
+        "UPDATE VenuePhoto SET is_primary = " +
+          `IF(photo_filename = "${photoFilename}", 1, 0) ` +
+          `WHERE venue_id = ${id}`
+      );
+    return done(200);
+  } catch (error) {
+    return done(404);
   }
 };
