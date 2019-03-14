@@ -167,3 +167,41 @@ exports.delete = (req, res) => {
     return res.sendStatus(status);
   });
 };
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.setPrimary = (req, res) => {
+  let id, photoFilename;
+  try {
+    ({ id, photoFilename } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true },
+      photoFilename: {
+        valueType: "string",
+        isRequired: true,
+        canBeEmpty: false
+      }
+    }));
+  } catch (error) {
+    return res.send(404);
+  }
+
+  let token;
+  try {
+    // @ts-ignore
+    ({ "x-authorization": token } = constructObject(req.headers, {
+      "x-authorization": {
+        isRequired: true,
+        canBeEmpty: false,
+        valueType: "string"
+      }
+    }));
+  } catch (error) {
+    return res.send(401);
+  }
+
+  Photos.setPrimary(token, id, photoFilename, status => {
+    return res.sendStatus(status);
+  });
+};
