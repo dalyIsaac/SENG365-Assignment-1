@@ -21,5 +21,8 @@ module.exports = app => {
     .route(app.rootUrl + "/venues/:id/photos")
     .post(upload.fields([{ name: "photo", maxCount: 1 }]), photos.upload);
 
-  app.route(app.rootUrl + "/venues/:id/photos/:photoFilename").get(photos.get);
+  app
+    .route(app.rootUrl + "/venues/:id/photos/:photoFilename")
+    .get(photos.get)
+    .delete(photos.delete);
 };
