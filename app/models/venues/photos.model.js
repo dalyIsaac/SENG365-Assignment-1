@@ -118,3 +118,70 @@ exports.postPhoto = async (
   fs.renameSync(fileDescriptor.path, newPath);
   return done(201);
 };
+
+/**
+ * @param {string} token
+ * @param {number} id
+ * @param {string} photoFilename
+ * @param {(status: number) => void} done
+ */
+exports.delete = async (token, id, photoFilename, done) => {
+  const userId = await Auth.authorize(token);
+  if (userId !== null) {
+    try {
+      // Gets the admin_id of the venue
+      const rows = await db
+        .getPool()
+        .query(`SELECT admin_id as adminId FROM Venue WHERE venue_id = ${id};`);
+      const { adminId } = rows[0];
+      if (adminId !== userId) {
+        return done(403);
+      }
+    } catch (error) {
+      return done(403);
+    }
+
+    const path = `media/venues/${id}/${photoFilename}`;
+    // Unlinks the photo, if it exists
+    try {
+      fs.unlinkSync(path);
+    } catch (error) {
+      return done(404);
+    }
+
+    let isPrimary;
+    try {
+      // Gets the photo from the DB to check if it was primary
+      // Also removes the photo from the DB
+      const rows = await db
+        .getPool()
+        .query(
+          "SELECT is_primary as isPrimary FROM VenuePhoto WHERE " +
+            `venue_id = ${id} AND photo_filename = "${photoFilename}";` +
+            `DELETE FROM VenuePhoto WHERE venue_id = ${id} AND ` +
+            `photo_filename = "${photoFilename}";`
+        );
+      ({ isPrimary } = rows[0][0]);
+    } catch (error) {
+      return done(404);
+    }
+
+    if (isPrimary) {
+      try {
+        // Makes a random photo the primary photo, if the deleted photo
+        // was the primary
+        await db
+          .getPool()
+          .query(
+            `UPDATE VenuePhoto SET is_primary = 1 WHERE venue_id = ${id} ` +
+              "LIMIT 1;"
+          );
+      } catch (error) {
+        console.error(error);
+      }
+      return done(200);
+    }
+  } else {
+    return done(401);
+  }
+};

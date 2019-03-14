@@ -3,8 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { constructObject } = require("../../customTyping");
 
-function deleteTempPhoto(photo) {
-  const newPhoto = photo[0];
+function deleteTempPhoto(newPhoto) {
   fs.unlinkSync(newPhoto.path);
 }
 
@@ -13,9 +12,15 @@ function deleteTempPhoto(photo) {
  * @param {import("express").Response} res
  */
 exports.upload = (req, res) => {
-  // @ts-ignore
-  const { photo } = req.files;
-  const newPhoto = photo[0];
+  let newPhoto;
+  try {
+    // @ts-ignore
+    const { photo } = req.files;
+    newPhoto = photo[0];
+  } catch (error) {
+    return res.send(400);
+  }
+
   if (
     !(
       newPhoto.path &&
@@ -38,7 +43,7 @@ exports.upload = (req, res) => {
       }
     }));
   } catch (error) {
-    deleteTempPhoto(photo);
+    deleteTempPhoto(newPhoto);
     return res.send(401);
   }
 
@@ -60,7 +65,7 @@ exports.upload = (req, res) => {
       }
     }));
   } catch (error) {
-    deleteTempPhoto(photo);
+    deleteTempPhoto(newPhoto);
     return res.send(400);
   }
 
@@ -70,12 +75,12 @@ exports.upload = (req, res) => {
       id: { valueType: "integer", min: 0, isRequired: true }
     }));
   } catch (error) {
-    deleteTempPhoto(photo);
+    deleteTempPhoto(newPhoto);
     return res.send(400);
   }
 
   if (newPhoto.mimetype !== "image/jpeg" && newPhoto.mimetype !== "image/png") {
-    deleteTempPhoto(photo);
+    deleteTempPhoto(newPhoto);
     return res.status(400).send("Unsupported filetype");
   }
 
@@ -88,7 +93,7 @@ exports.upload = (req, res) => {
     makePrimary,
     status => {
       if (status >= 400) {
-        deleteTempPhoto(photo);
+        deleteTempPhoto(newPhoto);
       }
       return res.sendStatus(status);
     }
@@ -123,4 +128,42 @@ exports.get = (req, res) => {
   } catch (error) {
     return res.sendStatus(404);
   }
+};
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.delete = (req, res) => {
+  let id, photoFilename;
+  try {
+    ({ id, photoFilename } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true },
+      photoFilename: {
+        valueType: "string",
+        isRequired: true,
+        canBeEmpty: false
+      }
+    }));
+  } catch (error) {
+    return res.send(404);
+  }
+
+  let token;
+  try {
+    // @ts-ignore
+    ({ "x-authorization": token } = constructObject(req.headers, {
+      "x-authorization": {
+        isRequired: true,
+        canBeEmpty: false,
+        valueType: "string"
+      }
+    }));
+  } catch (error) {
+    return res.send(401);
+  }
+
+  Photos.delete(token, id, photoFilename, status => {
+    return res.sendStatus(status);
+  });
 };
