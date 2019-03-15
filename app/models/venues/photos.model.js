@@ -218,7 +218,7 @@ exports.setPrimary = async (token, id, photoFilename, done) => {
       return done(403);
     }
   } catch (error) {
-    return done(403);
+    return done(404);
   }
 
   // alters isPrimary
