@@ -2,8 +2,26 @@ const { isString, isInteger, isFinite, isUndefined } = require("lodash/lang");
 const emailValidator = require("email-validator");
 
 /**
+ * @param {number} value
+ */
+function checkInteger(value, { key, min, max }) {
+  if (isInteger(value)) {
+    if (isInteger(min)) {
+      if (min > value) {
+        throw new Error(`Key: ${key}: Value is too small.`);
+      }
+    }
+    if (isInteger(max)) {
+      if (max < value) {
+        throw new Error(`Key: ${key}: Value is too large.`);
+      }
+    }
+  }
+}
+
+/**
  * Constructs an integer given the string input, if it is an integer.
- * @param {string} value
+ * @param {string & number} value
  * @param {{
  *   key?: string;
  *   defaultValue?: number;
@@ -13,27 +31,26 @@ const emailValidator = require("email-validator");
  * }} options
  */
 function constructInteger(value, { defaultValue, min, max, isRequired, key }) {
-  const intValue = parseInt(value);
-  if (isInteger(intValue)) {
-    if (isInteger(min)) {
-      if (min > intValue) {
-        throw new Error(`Key: ${key}: Value is too small.`);
-      }
+  if (isInteger(value)) {
+    checkInteger(value, { key, min, max });
+    return value;
+  }
+
+  if (isString(value)) {
+    const intValue = parseInt(value);
+    if (isInteger(intValue)) {
+      checkInteger(intValue, { key, min, max });
+      return intValue;
     }
-    if (isInteger(max)) {
-      if (max < intValue) {
-        throw new Error(`Key: ${key}: Value is too large.`);
-      }
-    }
-    return intValue;
-  } else if (defaultValue !== undefined && isInteger(defaultValue)) {
+  }
+  if (defaultValue !== undefined && isInteger(defaultValue)) {
     return defaultValue;
-  } else if (isRequired === false) {
+  }
+  if (isRequired === false) {
     return undefined;
   }
   throw new Error(`Key: ${key}: string given is not an integer.`);
 }
-exports.constructInteger = constructInteger;
 
 /**
  * Constructs a boolean given the string input, if it is a boolean.
@@ -67,7 +84,6 @@ function constructNumber(value, { key, defaultValue, min, max, isRequired }) {
   }
   throw new Error(`Key: ${key}: string given is not a number`);
 }
-exports.constructNumber = constructNumber;
 
 /**
  * Constructs a boolean given the string input, if it is a boolean.
@@ -77,19 +93,21 @@ exports.constructNumber = constructNumber;
 function constructBoolean(value, { key, defaultValue, isRequired }) {
   if (value === "false") {
     return false;
-  } else if (value === "true") {
+  }
+  if (value === "true") {
     return true;
-  } else if (
+  }
+  if (
     defaultValue !== undefined &&
     (defaultValue === true || defaultValue === false)
   ) {
     return defaultValue;
-  } else if (isRequired === false) {
+  }
+  if (isRequired === false) {
     return undefined;
   }
   throw new Error(`Key: ${key}: string given is not a boolean.`);
 }
-exports.constructBoolean = constructBoolean;
 
 /**
  * Constructs a string given the string input, if it is a boolean.
@@ -130,10 +148,9 @@ function constructString(
   }
   throw new Error(`Key: ${key}: The given string was invalid`);
 }
-exports.constructString = constructString;
 
 /**
- * @param {{[key: string]: string}} inputs The inputs from which to construct
+ * @param {{[key: string]: any}} inputs The inputs from which to construct
  * the object.
  * @param {{
  * [key: string]: {
@@ -165,6 +182,7 @@ exports.constructObject = (inputs, schema) => {
       let result;
       switch (valueType) {
         case "integer":
+          // @ts-ignore
           result = constructInteger(value, {
             key,
             // @ts-ignore
