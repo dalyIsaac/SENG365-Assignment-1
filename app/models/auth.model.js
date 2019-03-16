@@ -41,7 +41,7 @@ exports.authorize = async token => {
   try {
     const rows = await db
       .getPool()
-      .query(`SELECT user_id FROM User WHERE auth_token = "${token}"`);
+      .query("SELECT user_id FROM User WHERE auth_token = ?", [[token]]);
     if (rows.length > 0) {
       return Number(rows[0]["user_id"]);
     }
@@ -59,7 +59,7 @@ exports.userExists = async id => {
   try {
     const rows = await db
       .getPool()
-      .query(`SELECT * FROM User WHERE user_id = ${id}`);
+      .query("SELECT * FROM User WHERE user_id = ?", [[id]]);
     if (rows.length === 0) {
       return false;
     }

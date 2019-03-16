@@ -1,7 +1,6 @@
 const db = require("../../../config/db");
 const { isDefined } = require("../../customTyping");
 const Auth = require("../auth.model");
-const { isNumber, isString } = require("lodash/lang");
 const { snakeCase } = require("change-case");
 
 /**
@@ -33,44 +32,50 @@ const { snakeCase } = require("change-case");
  *   distance: number;
  * }>) => void} done Handles the completed API query.
  */
-exports.getVenues = (params, done) => {
+exports.getVenues = async (params, done) => {
   const select = [
-    "Venue.venue_id AS venueId",
-    "venue_name AS venueName",
-    "category_id AS categoryId",
-    "city",
-    "short_description AS shortDescription",
-    "latitude",
-    "longitude",
-    "mode_cost_rating AS modeCostRating",
-    "(SELECT photo_filename FROM VenuePhoto WHERE Venue.venue_id = VenuePhoto.venue_id) AS primaryPhoto",
-    "AVG(star_rating) AS meanStarRating"
+    `Venue.venue_id AS venueId, venue_name AS venueName,
+    category_id AS categoryId, city, short_description AS shortDescription,
+    latitude, longitude, mode_cost_rating AS modeCostRating, (
+      SELECT photo_filename 
+      FROM VenuePhoto 
+      WHERE Venue.venue_id = VenuePhoto.venue_id
+    ) AS primaryPhoto,
+    AVG(star_rating) AS meanStarRating`
   ];
 
+  const values = [];
+
   if (isDefined(params.myLatitude) && isDefined(params.myLongitude)) {
-    select.push(`111.111 * DEGREES(ACOS(LEAST(COS(RADIANS(${params.myLatitude}))
+    values.push(params.myLatitude, params.myLongitude, params.myLatitude);
+    select.push(`111.111 * DEGREES(ACOS(LEAST(COS(RADIANS(?))
          * COS(RADIANS(latitude))
-         * COS(RADIANS(${params.myLongitude} - longitude))
-         + SIN(RADIANS(${params.myLatitude}))
+         * COS(RADIANS(? - longitude))
+         + SIN(RADIANS(?))
          * SIN(RADIANS(latitude)), 1.0))) AS distance`);
   }
 
   let conditions = "";
   if (isDefined(params.city)) {
-    conditions += `AND city = '${params.city}' `;
+    values.push(params.city);
+    conditions += "AND city = ? ";
   }
   if (isDefined(params.q)) {
-    conditions += `AND venue_name LIKE '%${params.q}%' `;
+    values.push(`%${params.q}%`);
+    conditions += "AND venue_name LIKE ? ";
   }
   if (isDefined(params.categoryId)) {
-    conditions += `AND category_id = ${params.categoryId} `;
+    values.push(params.categoryId);
+    conditions += "AND category_id = ? ";
   }
   // meanStarRating is handled in the HAVING clause
   if (isDefined(params.maxCostRating)) {
-    conditions += `AND mode_cost_rating <= ${params.maxCostRating} `;
+    values.push(params.maxCostRating);
+    conditions += "AND mode_cost_rating <= ? ";
   }
   if (isDefined(params.adminId)) {
-    conditions += `AND admin_id = ${params.adminId} `;
+    values.push(params.adminId);
+    conditions += "AND admin_id = ? ";
   }
   if (conditions) {
     conditions = "WHERE 1 " + conditions;
@@ -82,7 +87,8 @@ exports.getVenues = (params, done) => {
 
   let having = "";
   if (isDefined(params.minStarRating)) {
-    having += `meanStarRating >= ${params.minStarRating} `;
+    values.push(params.minStarRating);
+    having += "meanStarRating >= ? ";
   }
   if (having !== "") {
     having = "HAVING " + having;
@@ -113,14 +119,23 @@ exports.getVenues = (params, done) => {
     orderBy += "DESC ";
   }
 
-  let limitQuery = isDefined(params.count)
-    ? `SET @myLimit = ${params.count};`
-    : `SELECT COUNT(venue_id) INTO @myLimit FROM Venue;`;
-  const offset = `OFFSET ${params.startIndex} `;
+  let count;
+  if (isDefined(params.count)) {
+    count = params.count;
+  } else {
+    try {
+      const rows = await db
+        .getPool()
+        .query("SELECT COUNT(venue_id) AS count FROM Venue");
+      ({ count } = rows[0]);
+    } catch (error) {
+      return done(400);
+    }
+  }
 
   const queryStr =
     "SELECT " +
-    select.join(", ") +
+    select +
     " FROM Venue " +
     join +
     conditions +
@@ -128,16 +143,13 @@ exports.getVenues = (params, done) => {
     having +
     groupBy +
     orderBy +
-    "LIMIT ? " +
-    offset;
-  const prepQuery = `PREPARE STMT FROM "${queryStr}";`;
-  const execQuery = "EXECUTE STMT USING @myLimit;DEALLOCATE PREPARE STMT;";
-  const query = limitQuery + prepQuery + execQuery;
-  db.getPool().query(query, (err, rows) => {
+    "LIMIT ? OFFSET ?";
+  values.push(count, params.startIndex);
+  db.getPool().query(queryStr, values, (err, rows) => {
     if (err) {
       return done(400);
     }
-    return done(200, rows[2]);
+    return done(200, rows);
   });
 };
 
@@ -168,7 +180,7 @@ exports.getVenue = (id, done) => {
     " FROM Venue " +
     "LEFT JOIN User ON Venue.admin_id = User.user_id " +
     "LEFT JOIN VenueCategory ON VenueCategory.category_id = Venue.category_id " +
-    `WHERE user_id = ${id} `;
+    "WHERE user_id = ? ";
 
   db.getPool().query(query, (err, venues) => {
     if (err || venues.length === 0) {
@@ -181,7 +193,7 @@ exports.getVenue = (id, done) => {
     ];
     const photosQuery =
       "SELECT " + photosSelect.join(", ") + " FROM VenuePhoto";
-    db.getPool().query(photosQuery, (err, photos) => {
+    db.getPool().query(photosQuery, [id], (err, photos) => {
       if (err) {
         return done(404);
       }
@@ -259,10 +271,10 @@ exports.create = async (token, props, done) => {
       adminId
     } = props;
     const query =
-      `INSERT INTO Venue (` +
-      `admin_id, venue_name, category_id, city, short_description, ` +
-      `long_description, address, latitude, longitude, date_added) VALUES (?);` +
-      `SELECT LAST_INSERT_ID();`;
+      "INSERT INTO Venue (" +
+      "admin_id, venue_name, category_id, city, short_description, " +
+      "long_description, address, latitude, longitude, date_added) VALUES (?);" +
+      "SELECT LAST_INSERT_ID();";
     const values = [
       [
         adminId,
@@ -311,7 +323,9 @@ exports.patch = async (token, id, props, done) => {
     try {
       const rows = await db
         .getPool()
-        .query(`SELECT admin_id AS adminId FROM Venue WHERE venue_id = ${id}`);
+        .query("SELECT admin_id AS adminId FROM Venue WHERE venue_id = ?", [
+          id
+        ]);
       ({ adminId } = rows[0]);
       if (adminId !== userId) {
         throw new Error("Invalid administrator.");
@@ -321,16 +335,13 @@ exports.patch = async (token, id, props, done) => {
     }
 
     try {
+      const itemsStr = [];
       const items = [];
       Object.keys(props).forEach(key => {
         const val = props[key];
         if (isDefined(val) && props.hasOwnProperty(key)) {
-          const output_key = snakeCase(key);
-          if (isString(val)) {
-            items.push(`${output_key} = "${val}"`);
-          } else if (isNumber(val)) {
-            items.push(`${output_key} = ${val}`);
-          }
+          itemsStr.push("?? = ?");
+          items.push(snakeCase(key), val);
         }
       });
       if (items.length === 0) {
@@ -339,7 +350,10 @@ exports.patch = async (token, id, props, done) => {
 
       await db
         .getPool()
-        .query(`UPDATE Venue SET ${items.join(", ")} WHERE venue_id = ${id}`);
+        .query(
+          "UPDATE Venue SET " + itemsStr.join(", ") + " WHERE venue_id = ?",
+          [...items, id]
+        );
       return done(200);
     } catch (error) {
       return done(400);

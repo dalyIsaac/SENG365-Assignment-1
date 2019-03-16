@@ -48,10 +48,9 @@ exports.postPhoto = async (
   try {
     const adminRows = await db
       .getPool()
-      .query(
-        "SELECT admin_id AS adminId FROM Venue " +
-          `WHERE venue_id = ${venueId};`
-      );
+      .query("SELECT admin_id AS adminId FROM Venue " + "WHERE venue_id = ?;", [
+        venueId
+      ]);
     if (adminRows.length > 0) {
       const { adminId } = adminRows[0];
       if (isUndefined(adminId) || adminId !== userId) {
@@ -73,7 +72,8 @@ exports.postPhoto = async (
       .query(
         "SELECT venue_id AS venueId, photo_filename AS photoFilename, " +
           "photo_description AS photoDescription " +
-          `FROM VenuePhoto WHERE venue_id = ${venueId} AND is_primary = 1;`
+          "FROM VenuePhoto WHERE venue_id = ? AND is_primary = 1;",
+        [venueId]
       );
   } catch (error) {
     return done(404);
@@ -101,7 +101,8 @@ exports.postPhoto = async (
           .getPool()
           .query(
             "UPDATE VenuePhoto SET is_primary = 0 WHERE " +
-              `venue_id = ${venueId} AND is_primary = 1;`
+              "venue_id = ? AND is_primary = 1;",
+            [venueId]
           );
         await addPhoto(venueId, newName, description, true);
       } else {
@@ -132,7 +133,9 @@ exports.delete = async (token, id, photoFilename, done) => {
       // Gets the admin_id of the venue
       const rows = await db
         .getPool()
-        .query(`SELECT admin_id as adminId FROM Venue WHERE venue_id = ${id};`);
+        .query("SELECT admin_id as adminId FROM Venue WHERE venue_id = ?;", [
+          id
+        ]);
       const { adminId } = rows[0];
       if (adminId !== userId) {
         return done(403);
@@ -157,9 +160,10 @@ exports.delete = async (token, id, photoFilename, done) => {
         .getPool()
         .query(
           "SELECT is_primary as isPrimary FROM VenuePhoto WHERE " +
-            `venue_id = ${id} AND photo_filename = "${photoFilename}";` +
-            `DELETE FROM VenuePhoto WHERE venue_id = ${id} AND ` +
-            `photo_filename = "${photoFilename}";`
+            "venue_id = ? AND photo_filename = ?;" +
+            "DELETE FROM VenuePhoto WHERE venue_id = ? AND " +
+            "photo_filename = ?;",
+          [id, photoFilename, id, photoFilename]
         );
       ({ isPrimary } = rows[0][0]);
     } catch (error) {
@@ -173,8 +177,8 @@ exports.delete = async (token, id, photoFilename, done) => {
         await db
           .getPool()
           .query(
-            `UPDATE VenuePhoto SET is_primary = 1 WHERE venue_id = ${id} ` +
-              "LIMIT 1;"
+            "UPDATE VenuePhoto SET is_primary = 1 WHERE venue_id = ? LIMIT 1;",
+            [id]
           );
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -210,8 +214,9 @@ exports.setPrimary = async (token, id, photoFilename, done) => {
       .getPool()
       .query(
         "SELECT admin_id AS adminId FROM VenuePhoto LEFT JOIN Venue ON " +
-          `Venue.venue_id = VenuePhoto.venue_id WHERE Venue.Venue_id = ${id} ` +
-          `AND photo_filename = "${photoFilename}";`
+          "Venue.venue_id = VenuePhoto.venue_id WHERE Venue.Venue_id = ? " +
+          "AND photo_filename = ?;",
+        [id, photoFilename]
       );
     const { adminId } = rows[0];
     if (adminId !== userId) {
@@ -226,9 +231,9 @@ exports.setPrimary = async (token, id, photoFilename, done) => {
     await db
       .getPool()
       .query(
-        "UPDATE VenuePhoto SET is_primary = " +
-          `IF(photo_filename = "${photoFilename}", 1, 0) ` +
-          `WHERE venue_id = ${id}`
+        "UPDATE VenuePhoto SET is_primary = IF(photo_filename = ?, 1, 0) " +
+          "WHERE venue_id = ?",
+        [photoFilename, id]
       );
     return done(200);
   } catch (error) {
