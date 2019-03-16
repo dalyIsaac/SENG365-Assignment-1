@@ -1,5 +1,7 @@
 const db = require("../../config/db");
 const Auth = require("./auth.model");
+const { isInteger } = require("lodash/lang");
+
 /**
  * @param {number} id
  * @param {string} token
@@ -62,5 +64,63 @@ exports.create = async (
     return done(201);
   } catch (error) {
     return done(400);
+  }
+};
+
+/**
+ * @param {number} id
+ * @param {(status: number, result?: {}) => void} done
+ */
+exports.get = async (id, done) => {
+  try {
+    const rows = await db.getPool().query(
+      "SELECT COUNT(venue_id) AS idCount FROM Venue WHERE venue_id = ?;" +
+        `SELECT user_id AS userId, username, review_body AS reviewBody,
+      star_rating AS starRating, cost_rating AS costRating, 
+      time_posted AS timePosted, venue_id AS venueId, venue_name AS venueName, 
+      category_name AS categoryName, city, 
+      short_description AS shortDescription, 
+      (
+        SELECT photo_filename AS photoFilename 
+        FROM VenuePhoto 
+        WHERE VenuePhoto.venue_id = Venue.venue_id AND is_primary =1 LIMIT 1
+      ) AS primaryPhoto
+      FROM Venue
+      LEFT JOIN Review ON venue_id = reviewed_venue_id
+      LEFT JOIN User ON review_author_id = user_id
+      LEFT JOIN VenueCategory ON Venue.category_id = VenueCategory.category_id
+      WHERE reviewed_venue_id = ?
+      ORDER BY time_posted DESC;
+      `,
+      [id, id]
+    );
+    const { idCount } = rows[0][0];
+    if (isInteger(idCount) && idCount > 0) {
+      const output = rows[1].reduce((acc, curr) => {
+        acc.push({
+          reviewAuthor: {
+            userId: curr.reviewAuthorId,
+            username: curr.username
+          },
+          reviewBody: curr.reviewBody,
+          starRating: curr.starRating,
+          costRating: curr.costRating,
+          timePosted: curr.timePosted,
+          venue: {
+            venueId: curr.venueId,
+            venueName: curr.venuename,
+            categoryName: curr.categoryName,
+            city: curr.city,
+            shortDescription: curr.shortDescription,
+            primaryPhoto: curr.primaryPhoto
+          }
+        });
+        return acc;
+      }, []);
+      return done(200, output);
+    }
+    return done(404);
+  } catch (error) {
+    return done(404);
   }
 };

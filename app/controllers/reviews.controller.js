@@ -44,3 +44,25 @@ exports.create = (req, res) => {
     return res.sendStatus(status);
   });
 };
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.get = (req, res) => {
+  let id;
+  try {
+    ({ id } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true }
+    }));
+  } catch (error) {
+    return res.send(404);
+  }
+
+  Reviews.get(id, (status, result) => {
+    if (result) {
+      return res.status(status).json(result);
+    }
+    return res.sendStatus(status);
+  });
+};
