@@ -124,3 +124,62 @@ exports.getByVenues = async (id, done) => {
     return done(404);
   }
 };
+
+/**
+ * @param {string} token
+ * @param {number} id
+ * @param {(status: number, result?: {}) => void} done
+ */
+exports.getByUser = async (token, id, done) => {
+  const userId = await Auth.authorize(token);
+  if (userId === null) {
+    return done(401);
+  }
+
+  try {
+    const rows = await db.getPool().query(
+      `SELECT COUNT(user_id) AS idCount FROM User WHERE user_id = ?;
+        SELECT user_id, username, review_body, star_rating, cost_rating, 
+        time_posted, venue_id, venue_name, category_name, city, 
+        short_description, (
+          SELECT photo_filename AS photoFilename 
+          FROM VenuePhoto 
+          WHERE VenuePhoto.venue_id = Venue.venue_id AND is_primary =1 LIMIT 1
+        ) AS primary_photo
+        FROM User
+        LEFT JOIN Review ON user_id = review_author_id
+        LEFT JOIN Venue ON reviewed_venue_id = venue_id
+        LEFT JOIN VenueCategory ON Venue.category_id = VenueCategory.category_id
+        WHERE user_id = ?;`,
+      [id, id]
+    );
+    const { idCount } = rows[0][0];
+    if (isInteger(idCount) && idCount > 0) {
+      const output = rows[1].reduce((acc, curr) => {
+        acc.push({
+          reviewAuthor: {
+            userId: curr.user_id,
+            username: curr.username
+          },
+          reviewBody: curr.review_body,
+          starRating: curr.star_rating,
+          costRating: curr.cost_rating,
+          timePosted: curr.time_posted,
+          venue: {
+            venueId: curr.venue_id,
+            venueName: curr.venue_name,
+            categoryName: curr.category_name,
+            city: curr.city,
+            shortDescription: curr.short_description,
+            primaryPhoto: curr.primary_photo
+          }
+        });
+        return acc;
+      }, []);
+      return done(200, output);
+    }
+    return done(404);
+  } catch (error) {
+    return done(404);
+  }
+};

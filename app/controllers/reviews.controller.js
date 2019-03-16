@@ -66,3 +66,39 @@ exports.getByVenues = (req, res) => {
     return res.sendStatus(status);
   });
 };
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+exports.getByUsers = (req, res) => {
+  let id;
+  try {
+    ({ id } = constructObject(req.params, {
+      id: { valueType: "integer", min: 0, isRequired: true }
+    }));
+  } catch (error) {
+    return res.send(404);
+  }
+
+  let token;
+  try {
+    // @ts-ignore
+    ({ "x-authorization": token } = constructObject(req.headers, {
+      "x-authorization": {
+        valueType: "string",
+        canBeEmpty: false,
+        isRequired: false
+      }
+    }));
+  } catch (error) {
+    return res.send(401);
+  }
+
+  Reviews.getByUser(token, id, (status, result) => {
+    if (result) {
+      return res.status(status).send(result);
+    }
+    return res.sendStatus(status);
+  });
+};
