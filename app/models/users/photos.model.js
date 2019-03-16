@@ -30,9 +30,10 @@ exports.putPhoto = async (token, id, buf, format, done) => {
     fs.writeFileSync(filename, buf);
     db.getPool().query(
       "SELECT profile_photo_filename AS previousFilename FROM User WHERE " +
-        `user_id = ${id};` +
-        `UPDATE User SET profile_photo_filename = "${filename}" WHERE ` +
-        `user_id = ${id}`,
+        "user_id = ?;" +
+        "UPDATE User SET profile_photo_filename = ? WHERE " +
+        "user_id = ?",
+      [id, filename, id],
       (err, rows) => {
         if (err) {
           return done(400);
@@ -61,7 +62,8 @@ exports.putPhoto = async (token, id, buf, format, done) => {
  */
 exports.getPhoto = (id, done) => {
   db.getPool().query(
-    `SELECT profile_photo_filename AS filename FROM User WHERE user_id = ${id}`,
+    "SELECT profile_photo_filename AS filename FROM User WHERE user_id = ?",
+    [id],
     (err, rows) => {
       if (err || rows.length === 0) {
         return done(404);
@@ -98,9 +100,10 @@ exports.deletePhoto = async (token, id, done) => {
         .getPool()
         .query(
           "SELECT profile_photo_filename AS filename FROM User WHERE " +
-            `user_id = ${id};` +
+            "user_id = ?;" +
             "UPDATE User SET profile_photo_filename = null WHERE " +
-            `user_id = ${id}`
+            "user_id = ?",
+          [id, id]
         );
       if (rows.length === 0 || rows[0].length === 0) {
         return done(400);

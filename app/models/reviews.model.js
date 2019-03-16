@@ -27,7 +27,7 @@ exports.create = async (
       .query("SELECT admin_id AS adminId FROM Venue WHERE venue_id = ?;", [
         [id]
       ]);
-    let { adminId } = rows[0];
+    const { adminId } = rows[0];
     if (adminId === userId) {
       return done(403);
     }
