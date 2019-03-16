@@ -182,7 +182,7 @@ exports.getVenue = (id, done) => {
     "LEFT JOIN VenueCategory ON VenueCategory.category_id = Venue.category_id " +
     "WHERE user_id = ? ";
 
-  db.getPool().query(query, (err, venues) => {
+  db.getPool().query(query, [id], (err, venues) => {
     if (err || venues.length === 0) {
       return done(404);
     }
