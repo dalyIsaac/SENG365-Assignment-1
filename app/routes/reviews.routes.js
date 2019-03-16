@@ -4,5 +4,5 @@ module.exports = app => {
   app
     .route(app.rootUrl + "/venues/:id/reviews")
     .post(reviews.create)
-    .get(reviews.get);
+    .get(reviews.getByVenues);
 };

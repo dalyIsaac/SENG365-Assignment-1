@@ -49,7 +49,7 @@ exports.create = (req, res) => {
  * @param {import("express").Request} req
  * @param {import("express").Response} res
  */
-exports.get = (req, res) => {
+exports.getByVenues = (req, res) => {
   let id;
   try {
     ({ id } = constructObject(req.params, {
@@ -59,7 +59,7 @@ exports.get = (req, res) => {
     return res.send(404);
   }
 
-  Reviews.get(id, (status, result) => {
+  Reviews.getByVenues(id, (status, result) => {
     if (result) {
       return res.status(status).json(result);
     }

@@ -71,7 +71,7 @@ exports.create = async (
  * @param {number} id
  * @param {(status: number, result?: {}) => void} done
  */
-exports.get = async (id, done) => {
+exports.getByVenues = async (id, done) => {
   try {
     const rows = await db.getPool().query(
       "SELECT COUNT(venue_id) AS idCount FROM Venue WHERE venue_id = ?;" +
