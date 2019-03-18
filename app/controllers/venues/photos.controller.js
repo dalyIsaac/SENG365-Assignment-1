@@ -49,19 +49,14 @@ exports.upload = (req, res) => {
 
   let description, makePrimary;
   try {
-    ({
-      "description\n": description,
-      "makePrimary\n": makePrimary
-    } = constructObject(req.body, {
-      "makePrimary\n": {
+    ({ description, makePrimary } = constructObject(req.body, {
+      makePrimary: {
         valueType: "boolean",
-        isRequired: false,
-        canBeEmpty: true
+        isRequired: true
       },
-      "description\n": {
+      description: {
         valueType: "string",
-        isRequired: false,
-        canBeEmpty: true
+        isRequired: true
       }
     }));
   } catch (error) {

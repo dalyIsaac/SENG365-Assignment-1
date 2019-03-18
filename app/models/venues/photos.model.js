@@ -57,6 +57,8 @@ exports.postPhoto = async (
         // the admin is not the user
         return done(403);
       }
+    } else {
+      return done(404);
     }
   } catch (error) {
     return done(404);

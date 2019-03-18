@@ -233,7 +233,10 @@ exports.getVenue = (id, done) => {
         photos: []
       };
       photos.forEach(props => {
-        output.photos.push({ ...props });
+        output.photos.push({
+          ...props,
+          isPrimary: props.isPrimary ? true : false
+        });
       });
       return done(200, output);
     });
