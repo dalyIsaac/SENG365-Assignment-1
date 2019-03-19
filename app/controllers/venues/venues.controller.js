@@ -125,7 +125,7 @@ exports.create = (req, res) => {
         canBeEmpty: false,
         isRequired: true
       },
-      categoryId: { valueType: "integer", isRequired: true },
+      categoryId: { valueType: "integer", isRequired: true, min: 0 },
       city: { valueType: "string", canBeEmpty: false, isRequired: true },
       shortDescription: {
         valueType: "string",
@@ -196,7 +196,7 @@ exports.patch = (req, res) => {
         canBeEmpty: false,
         isRequired: false
       },
-      categoryId: { valueType: "integer", isRequired: false },
+      categoryId: { valueType: "integer", isRequired: false, min: 0 },
       city: { valueType: "string", canBeEmpty: false, isRequired: false },
       shortDescription: {
         valueType: "string",

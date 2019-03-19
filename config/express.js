@@ -20,8 +20,8 @@ module.exports = function() {
   app.use(bodyParser.json());
   // for the /executeSql endpoint
   app.use(bodyParser.raw({ type: "text/plain" }));
-  app.use(bodyParser.raw({ type: "image/png" }));
-  app.use(bodyParser.raw({ type: "image/jpeg" }));
+  app.use(bodyParser.raw({ type: "image/png", limit: "20mb" }));
+  app.use(bodyParser.raw({ type: "image/jpeg", limit: "20mb" }));
   app.use(bodyParser.urlencoded({ extended: true }));
 
   // ROUTES
