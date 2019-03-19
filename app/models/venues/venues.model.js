@@ -197,39 +197,25 @@ exports.getVenue = (id, done) => {
       if (err) {
         return done(404);
       }
-      const {
-        venueName,
-        admin_id,
-        username,
-        categoryId,
-        categoryName,
-        categoryDescription,
-        city,
-        shortDescription,
-        longDescription,
-        dateAdded,
-        address,
-        latitude,
-        longitude
-      } = venues[0];
+      const venue = venues[0];
       const output = {
-        venueName,
+        venueName: venue.venueName,
         admin: {
-          userId: admin_id,
-          username
+          userId: venue.admin_id,
+          username: venue.username
         },
         category: {
-          categoryId,
-          categoryName,
-          categoryDescription
+          categoryId: venue.categoryId,
+          categoryName: venue.categoryName,
+          categoryDescription: venue.categoryDescription
         },
-        city,
-        shortDescription,
-        longDescription,
-        dateAdded,
-        address,
-        latitude,
-        longitude,
+        city: venue.city,
+        shortDescription: venue.shortDescription,
+        longDescription: venue.longDescription,
+        dateAdded: venue.dateAdded,
+        address: venue.address,
+        latitude: venue.latitude,
+        longitude: venue.longitude,
         photos: []
       };
       photos.forEach(props => {

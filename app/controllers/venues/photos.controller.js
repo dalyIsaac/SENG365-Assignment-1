@@ -119,7 +119,7 @@ exports.get = (req, res) => {
     `/media/venues/${id}/` +
     photoFilename;
   try {
-    return res.status(200).sendfile(absolutePath);
+    return res.status(200).sendFile(absolutePath);
   } catch (error) {
     return res.sendStatus(404);
   }
