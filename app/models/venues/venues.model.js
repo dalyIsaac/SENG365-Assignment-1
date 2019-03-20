@@ -101,22 +101,23 @@ exports.getVenues = async (params, done) => {
 
   let orderBy = "ORDER BY ";
   switch (params.sortBy) {
-    case "STAR_RATING":
+    case "STAR_RATING": {
       orderBy += "meanStarRating ";
+      orderBy += params.reverseSort ? "ASC " : "DESC ";
       break;
-    case "COST_RATING":
+    }
+    case "COST_RATING": {
       orderBy += "mode_cost_rating ";
+      orderBy += params.reverseSort ? "DESC " : "ASC ";
       break;
-    case "DISTANCE":
+    }
+    case "DISTANCE": {
       orderBy += "distance ";
+      orderBy += params.reverseSort ? "DESC " : "ASC ";
       break;
+    }
     default:
       break;
-  }
-  if (params.reverseSort) {
-    orderBy += "ASC ";
-  } else {
-    orderBy += "DESC ";
   }
 
   let count;
@@ -144,6 +145,7 @@ exports.getVenues = async (params, done) => {
     groupBy +
     orderBy +
     "LIMIT ? OFFSET ?";
+  console.log(queryStr);
   values.push(count, params.startIndex);
   db.getPool().query(queryStr, values, (err, rows) => {
     if (err) {
