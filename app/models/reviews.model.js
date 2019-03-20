@@ -29,12 +29,16 @@ exports.create = async (
       .query("SELECT admin_id AS adminId FROM Venue WHERE venue_id = ?;", [
         [id]
       ]);
-    const { adminId } = rows[0];
-    if (adminId === userId) {
-      return done(403);
+    if (rows.length && rows.length > 0) {
+      const { adminId } = rows[0];
+      if (adminId === userId) {
+        return done(403);
+      }
+    } else {
+      return done(404); // venue_id doesn't exist inside the database
     }
   } catch (error) {
-    return done(403);
+    return done(404);
   }
 
   try {
