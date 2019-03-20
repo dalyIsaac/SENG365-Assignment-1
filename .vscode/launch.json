@@ -8,8 +8,7 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}/server.js",
-      "useWSL": true
+      "program": "${workspaceFolder}/server.js"
     }
   ]
 }
