@@ -145,7 +145,7 @@ exports.getVenues = async (params, done) => {
     groupBy +
     orderBy +
     "LIMIT ? OFFSET ?";
-  console.log(queryStr);
+
   values.push(count, params.startIndex);
   db.getPool().query(queryStr, values, (err, rows) => {
     if (err) {
