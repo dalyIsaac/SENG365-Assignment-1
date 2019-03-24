@@ -177,7 +177,11 @@ exports.patch = (req, res) => {
     ({ id } = constructObject(req.params, {
       id: { valueType: "integer", min: 0, isRequired: true }
     }));
-    // @ts-ignore
+  } catch (error) {
+    return res.send(400);
+  }
+
+  try {
     ({ "x-authorization": token } = constructObject(req.headers, {
       "x-authorization": {
         valueType: "string",
@@ -189,8 +193,9 @@ exports.patch = (req, res) => {
     return res.send(401);
   }
 
+  let props;
   try {
-    const props = constructObject(req.body, {
+    props = constructObject(req.body, {
       venueName: {
         valueType: "string",
         canBeEmpty: false,
@@ -223,13 +228,13 @@ exports.patch = (req, res) => {
         max: 180
       }
     });
-    // @ts-ignore
-    Venues.patch(token, id, props, status => {
-      return res.sendStatus(status);
-    });
   } catch (error) {
     return res.send(400);
   }
+
+  Venues.patch(token, id, props, status => {
+    return res.sendStatus(status);
+  });
 };
 
 /**
