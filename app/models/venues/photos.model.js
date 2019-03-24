@@ -187,8 +187,8 @@ exports.delete = async (token, id, photoFilename, done) => {
         // eslint-disable-next-line no-console
         console.error(error);
       }
-      return done(200);
     }
+    return done(200);
   } else {
     return done(401);
   }
