@@ -110,16 +110,11 @@ exports.deletePhoto = async (token, id, done) => {
       }
 
       const { filename } = rows[0][0];
-      if (!isStringAndNotEmpty(filename)) {
-        return done(404);
-      }
 
       if (fs.existsSync(filename)) {
         fs.unlinkSync(filename);
-        return done(200);
-      } else {
-        return done(404);
       }
+      return done(200);
     } catch (error) {
       return done(400);
     }
