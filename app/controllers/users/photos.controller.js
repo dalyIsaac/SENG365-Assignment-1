@@ -10,20 +10,13 @@ const path = require("path");
 exports.upload = (req, res) => {
   let token;
   let id;
-  let contentType;
   try {
     // @ts-ignore
     ({
-      "x-authorization": token,
-      "content-type": contentType
+      "x-authorization": token
       // @ts-ignore
     } = constructObject(req.headers, {
       "x-authorization": {
-        valueType: "string",
-        isRequired: true,
-        canBeEmpty: false
-      },
-      "content-type": {
         valueType: "string",
         isRequired: true,
         canBeEmpty: false
@@ -31,6 +24,23 @@ exports.upload = (req, res) => {
     }));
   } catch (error) {
     return res.sendStatus(401);
+  }
+
+  let contentType;
+  try {
+    // @ts-ignore
+    ({
+      "content-type": contentType
+      // @ts-ignore
+    } = constructObject(req.headers, {
+      "content-type": {
+        valueType: "string",
+        isRequired: true,
+        canBeEmpty: false
+      }
+    }));
+  } catch (error) {
+    return res.sendStatus(400);
   }
 
   try {
