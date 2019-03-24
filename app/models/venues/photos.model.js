@@ -48,7 +48,7 @@ exports.postPhoto = async (
   try {
     const adminRows = await db
       .getPool()
-      .query("SELECT admin_id AS adminId FROM Venue " + "WHERE venue_id = ?;", [
+      .query("SELECT admin_id AS adminId FROM Venue WHERE venue_id = ?;", [
         venueId
       ]);
     if (adminRows.length > 0) {
@@ -58,6 +58,7 @@ exports.postPhoto = async (
         return done(403);
       }
     } else {
+      // couldn't find the venue
       return done(404);
     }
   } catch (error) {

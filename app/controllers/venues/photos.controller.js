@@ -4,7 +4,11 @@ const path = require("path");
 const { constructObject } = require("../../customTyping");
 
 function deleteTempPhoto(newPhoto) {
-  fs.unlinkSync(newPhoto.path);
+  try {
+    fs.unlinkSync(newPhoto.path);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 /**
