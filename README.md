@@ -1,3 +1,7 @@
+This project was written for an assignment for SENG365 Web Computing Architectures, at the University of Canterbury, in 2019. The assignent information can be found in [`./app/resources/`](./app/resources/), which includes a Swagger API specification.
+
+The following was written as part of the assignment instructions:
+
 # SENG365 student repo
 
 ## Overview of the continuous deployment process
